@@ -10,9 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    <!-- Unified SSO Auth & Forced AuthGuard Engine -->
-    <script src="unified-auth.js"></script>
-    <script src="auth-guard.js"></script>
     <!-- JSZip for Client-side Multi-Page Bundle Packaging -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- XSITE Visual Inspector & Variable Editor Engine -->
@@ -103,7 +100,7 @@
     <nav class="border-b border-slate-200 dark:border-gray-800/60 backdrop-blur-md bg-white/70 dark:bg-brand-darkBg/70 sticky top-0 z-50 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="xsite.html" class="flex items-center gap-2">
+                <a href="xsite" class="flex items-center gap-2">
                     <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="rocket promise" class="h-8 md:h-10 w-auto object-contain inline-block">
                     <span class="text-sm tracking-[0.25em] font-black uppercase text-slate-800 dark:text-white bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:via-gray-200 dark:to-gray-400 bg-clip-text text-transparent hidden sm:inline-block">XSTREAM FLEX</span>
                 </a>
@@ -186,21 +183,70 @@
             <div id="inputPane" class="lg:col-span-4 space-y-3 transition-all duration-300">
                 <form id="genesisForm" class="space-y-3">
 
-                    <!-- STEP 1 ACCORDION: BRAINDUMP & PAGES PICKER (MAIN BUILDER STEP - OPEN BY DEFAULT) -->
+                    <!-- STEP 1 ACCORDION: Get & Activate Your Key (OPEN BY DEFAULT) -->
                     <div class="bg-white dark:bg-brand-panel border-2 border-emerald-500/50 rounded-xl overflow-hidden shadow-lg transition-all">
                         <button type="button" onclick="toggleStepDrawer(1)" class="w-full px-4 py-3 bg-emerald-500/10 dark:bg-black/40 hover:bg-emerald-500/20 flex items-center justify-between transition-colors cursor-pointer text-left">
                             <div class="flex items-center gap-2.5">
                                 <span class="w-6 h-6 rounded-full bg-emerald-500 text-black font-extrabold text-xs flex items-center justify-center border border-emerald-500">1</span>
+                                <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-white">Step 1: Activate Your Key</h3>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span id="keyStatusBadge" class="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 font-bold uppercase">Unverified</span>
+                                <span id="stepIcon_1" class="text-xs text-slate-400 dark:text-gray-500 font-mono">▼</span>
+                            </div>
+                        </button>
+                        <div id="stepContent_1" class="p-4 space-y-3 border-t border-slate-200 dark:border-gray-800/60">
+                            <p class="text-xs text-slate-600 dark:text-gray-300 leading-relaxed">
+                                Enter your email to instantly get a <strong>Free Trial Key</strong>, or paste your secret key below and click <strong>Activate Key</strong>!
+                            </p>
+                            
+                            <div class="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    id="licenseKey" 
+                                    placeholder="Enter email for Free Trial key OR paste XSITE key" 
+                                    class="flex-1 bg-slate-50 dark:bg-black/50 border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 dark:text-brand-glow placeholder-slate-400 dark:placeholder-gray-600 focus:outline-none focus:border-brand-glow transition-colors"
+                                />
+                                <button 
+                                    type="button" 
+                                    id="verifyKeyBtn"
+                                    class="bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs px-4 rounded-lg transition-colors font-mono shadow-md cursor-pointer shrink-0"
+                                >
+                                    Activate Key
+                                </button>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-1 text-xs">
+                                <button type="button" id="unlockPricingBtn" class="text-xs font-bold text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                    🎁 Get Free Key / View Plans
+                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" id="openPricingModalBtn" class="text-[10px] font-mono text-gray-400 hover:text-white cursor-pointer">
+                                        💳 Upgrade
+                                    </button>
+                                    <button type="button" id="openProjectsBtn" class="text-[10px] font-mono text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                        📁 Saved Projects
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2 ACCORDION: BRAINDUMP & PAGES PICKER (MERGED MAIN STEP) -->
+                    <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-lg transition-all">
+                        <button type="button" onclick="toggleStepDrawer(2)" class="w-full px-4 py-3 bg-slate-100/80 dark:bg-black/30 hover:bg-slate-200/60 dark:hover:bg-gray-900/60 flex items-center justify-between transition-colors cursor-pointer text-left">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/30">2</span>
                                 <div>
-                                    <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-white">Step 1: Tell Us Your Website Idea & Pick Pages</h3>
+                                    <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-white">Step 2: Tell Us Your Website Idea & Pick Pages</h3>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold uppercase">Main Step</span>
-                                <span id="stepIcon_1" class="text-xs text-slate-400 dark:text-gray-500 font-mono">▼</span>
+                                <span id="stepIcon_2" class="text-xs text-slate-400 dark:text-gray-500 font-mono">▲</span>
                             </div>
                         </button>
-                        <div id="stepContent_1" class="p-4 space-y-4 border-t border-slate-200 dark:border-gray-800/60">
+                        <div id="stepContent_2" class="hidden p-4 space-y-4 border-t border-slate-200 dark:border-gray-800/60">
                             <!-- Braindump Section -->
                             <div id="brainDumpContainer" class="space-y-2">
                                 <div class="flex justify-between items-center">
@@ -375,19 +421,19 @@
                         </div>
                     </div>
 
-                    <!-- STEP 2 ACCORDION: Where to launch website -->
+                    <!-- STEP 3 ACCORDION: Where to launch website -->
                     <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-lg transition-all">
-                        <button type="button" onclick="toggleStepDrawer(2)" class="w-full px-4 py-3 bg-slate-100/80 dark:bg-black/30 hover:bg-slate-200/60 dark:hover:bg-gray-900/60 flex items-center justify-between transition-colors cursor-pointer text-left">
+                        <button type="button" onclick="toggleStepDrawer(3)" class="w-full px-4 py-3 bg-slate-100/80 dark:bg-black/30 hover:bg-slate-200/60 dark:hover:bg-gray-900/60 flex items-center justify-between transition-colors cursor-pointer text-left">
                             <div class="flex items-center gap-2.5">
-                                <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/30">2</span>
-                                <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-white">Step 2: Choose Where to Launch</h3>
+                                <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-500/30">3</span>
+                                <h3 class="text-xs md:text-sm font-bold text-slate-800 dark:text-white">Step 3: Choose Where to Launch</h3>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span id="destStatusBadge" class="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold">Default: Instant Launch</span>
-                                <span id="stepIcon_2" class="text-xs text-slate-400 dark:text-gray-500 font-mono">▲</span>
+                                <span id="stepIcon_3" class="text-xs text-slate-400 dark:text-gray-500 font-mono">▲</span>
                             </div>
                         </button>
-                        <div id="stepContent_2" class="hidden p-4 space-y-3 border-t border-slate-200 dark:border-gray-800/60">
+                        <div id="stepContent_3" class="hidden p-4 space-y-3 border-t border-slate-200 dark:border-gray-800/60">
                             <p class="text-xs text-slate-600 dark:text-gray-300">Choose where your website will live on the internet! <em>(Preset to Instant Launch for 0 setup!)</em></p>
 
                             <div id="destinationSetupCard" class="space-y-3">
@@ -668,11 +714,6 @@
                                             <label class="block text-[10px] uppercase font-bold text-indigo-400 mb-1">Webhook Secret / API Endpoint</label>
                                             <input type="text" id="xmailWebhookInput" placeholder="https://xmail.xstreamflex.com/api/ingest" class="w-full bg-black border border-gray-800 text-indigo-300 rounded px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-indigo-400">
                                         </div>
-                                    </div>
-                                    <div class="pt-2 border-t border-gray-800">
-                                        <button type="button" onclick="triggerNewsletterWelcomeCampaignSetup()" class="w-full px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 rounded-lg text-xs font-mono font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
-                                            <span>⚡ Tie Newsletter Form to XMAIL & Auto-Generate 3-Step AI Welcome Sequence</span>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -2364,8 +2405,17 @@ function escapeHtml(str) {
 
 async function fetchSavedProjects() {
   if (!projectsList) return;
-  const userProf = window.UnifiedAuth ? window.UnifiedAuth.getUser() : null;
-  const key = activeVerifiedKey || (userProf ? userProf.email : '') || localStorage.getItem('xsites_key') || 'user_guest';
+  const key = activeVerifiedKey || (licenseInput ? licenseInput.value.trim() : '') || localStorage.getItem('xsites_active_key');
+  
+  if (!key) {
+    projectsList.innerHTML = `
+      <div class="text-center py-8 px-4 space-y-2">
+        <p class="text-xs text-amber-400 font-semibold">🔑 Key Not Activated</p>
+        <p class="text-[11px] text-gray-400">Please enter and activate your key to view saved projects.</p>
+      </div>
+    `;
+    return;
+  }
 
   projectsList.innerHTML = `
     <div class="text-center py-8">
@@ -2454,8 +2504,12 @@ async function fetchSavedProjects() {
 }
 
 async function saveCurrentProject() {
-  const userProf = window.UnifiedAuth ? window.UnifiedAuth.getUser() : null;
-  const key = activeVerifiedKey || (userProf ? userProf.email : '') || localStorage.getItem('xsites_key') || 'user_guest';
+  const key = activeVerifiedKey || (licenseInput ? licenseInput.value.trim() : '') || localStorage.getItem('xsites_active_key');
+  if (!key) {
+    alert("Please enter and activate your key before saving projects.");
+    if (licenseInput) licenseInput.focus();
+    return;
+  }
 
   if (!sitePagesTree || Object.keys(sitePagesTree).length === 0) {
     alert("No generated site to save yet. Build or launch a website first!");
@@ -2885,54 +2939,56 @@ function applyTierBrandingRules(tierId) {
     }
 }
 
-verifyBtn.addEventListener('click', async () => {
-    const rawKey = licenseInput.value.trim();
-    if (!rawKey) return;
+if (verifyBtn) {
+    verifyBtn.addEventListener('click', async () => {
+        const rawKey = licenseInput ? licenseInput.value.trim() : '';
+        if (!rawKey) return;
 
-    verifyBtn.disabled = true;
-    verifyBtn.textContent = "...";
-    
-    try {
-        const res = await fetch(`${BACKEND_WORKER_URL}/verify-license`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ licenseKey: rawKey })
-        });
-        const data = await res.json();
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = "...";
         
-        if (data.success) {
-            const assignedKey = data.key || rawKey;
-            activeVerifiedKey = assignedKey;
-            localStorage.setItem('xsites_key', assignedKey);
-            if (licenseInput) licenseInput.value = assignedKey;
+        try {
+            const res = await fetch(`${BACKEND_WORKER_URL}/verify-license`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ licenseKey: rawKey })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                const assignedKey = data.key || rawKey;
+                activeVerifiedKey = assignedKey;
+                try { localStorage.setItem('xsites_key', assignedKey); } catch(e) {}
+                if (licenseInput) licenseInput.value = assignedKey;
 
-            if (creditDisplay) creditDisplay.textContent = data.credits;
-            if (keyStatusBadge) {
-                keyStatusBadge.textContent = "✓ KEY ACTIVE (" + (data.tierName || "VERIFIED") + ")";
-                keyStatusBadge.className = "text-[9px] font-mono text-brand-glow font-bold uppercase tracking-wider";
-            }
-            applyTierBrandingRules(data.tierId);
-            // Auto open Step 2 (Braindump)!
-            openStepDrawer(2);
-            if (textarea) textarea.focus();
+                if (creditDisplay) creditDisplay.textContent = data.credits;
+                if (keyStatusBadge) {
+                    keyStatusBadge.textContent = "✓ KEY ACTIVE (" + (data.tierName || "VERIFIED") + ")";
+                    keyStatusBadge.className = "text-[9px] font-mono text-brand-glow font-bold uppercase tracking-wider";
+                }
+                applyTierBrandingRules(data.tierId);
+                // Auto open Step 2 (Braindump)!
+                if (typeof openStepDrawer === 'function') openStepDrawer(2);
+                if (textarea) textarea.focus();
 
-            if (rawKey.includes('@')) {
-                alert(`🎉 Free Trial Key generated & activated!\n\nKey: ${assignedKey}\nA confirmation email has also been sent to ${data.customerEmail || rawKey}.`);
+                if (rawKey.includes('@')) {
+                    alert(`🎉 Free Trial Key generated & activated!\n\nKey: ${assignedKey}\nA confirmation email has also been sent to ${data.customerEmail || rawKey}.`);
+                }
+            } else {
+                alert(`Key Verification rejected: ${data.error}`);
+                if (keyStatusBadge) {
+                    keyStatusBadge.textContent = "INVALID KEY";
+                    keyStatusBadge.className = "text-[9px] font-mono text-red-400 font-bold uppercase tracking-wider";
+                }
             }
-        } else {
-            alert(`Key Verification rejected: ${data.error}`);
-            if (keyStatusBadge) {
-                keyStatusBadge.textContent = "INVALID KEY";
-                keyStatusBadge.className = "text-[9px] font-mono text-red-400 font-bold uppercase tracking-wider";
-            }
+        } catch (err) {
+            alert(`Gateway error: ${err.message}`);
+        } finally {
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = "Activate Key";
         }
-    } catch (err) {
-        alert(`Gateway error: ${err.message}`);
-    } finally {
-        verifyBtn.disabled = false;
-        verifyBtn.textContent = "Activate Key";
-    }
-});
+    });
+}
 
 // MODAL FREE TRIAL ACTIVATION LOGIC
 const modalFreeEmailInput = document.getElementById('modalFreeEmailInput');
@@ -3072,21 +3128,26 @@ function extractDnaFromHtml(html, primaryPageKey = 'index') {
 }
 
 // MAIN FORM SUBMIT
-genesisForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const userProfile = window.UnifiedAuth ? window.UnifiedAuth.getUser() : null;
-    activeVerifiedKey = userProfile ? userProfile.email : (localStorage.getItem('xsites_key') || 'user_guest');
-
-    if (currentEngineMode === "html_import") return;
-
-    const selectedCheckboxes = document.querySelectorAll('.page-arch-cb:checked');
-    currentLaunchArchitecture = [];
-    selectedCheckboxes.forEach(cb => {
-        if (!currentLaunchArchitecture.includes(cb.value)) {
-            currentLaunchArchitecture.push(cb.value);
+const genesisFormEl = document.getElementById('genesisForm');
+if (genesisFormEl) {
+    genesisFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!activeVerifiedKey) {
+            alert("Please enter & activate your key code in Step 1 first.");
+            if (typeof openStepDrawer === 'function') openStepDrawer(1);
+            if (licenseInput) licenseInput.focus();
+            return;
         }
-    });
+
+        if (currentEngineMode === "html_import") return;
+
+        const selectedCheckboxes = document.querySelectorAll('.page-arch-cb:checked');
+        currentLaunchArchitecture = [];
+        selectedCheckboxes.forEach(cb => {
+            if (!currentLaunchArchitecture.includes(cb.value)) {
+                currentLaunchArchitecture.push(cb.value);
+            }
+        });
 
     const blogCb = document.querySelector('.page-arch-cb[value="blog"]:checked');
     const blogCountSelect = document.getElementById('blogPostCountSelect');
@@ -3380,12 +3441,13 @@ if (previewFrame) {
 }
 
 // DEPLOYMENT TO GITHUB
-pushToGithubBtn.addEventListener('click', async () => {
-    pushToGithubBtn.disabled = true;
-    pushToGithubBtn.classList.add('opacity-40', 'cursor-not-allowed');
-    pushToGithubBtn.textContent = "⚡ Publishing live...";
-    
-    logTerminal("Publishing live to GitHub Pages...", "white");
+if (pushToGithubBtn) {
+    pushToGithubBtn.addEventListener('click', async () => {
+        pushToGithubBtn.disabled = true;
+        pushToGithubBtn.classList.add('opacity-40', 'cursor-not-allowed');
+        pushToGithubBtn.textContent = "⚡ Publishing live...";
+        
+        logTerminal("Publishing live to GitHub Pages...", "white");
     
     try {
         const intendedDomain = intendedDomainInput ? intendedDomainInput.value.trim() : '';
@@ -3536,21 +3598,24 @@ if (downloadZipBtn) downloadZipBtn.addEventListener('click', () => downloadCompl
 if (quickCopyBtn) quickCopyBtn.addEventListener('click', () => copyActivePageHtmlToClipboard(quickCopyBtn));
 if (quickDownloadBtn) quickDownloadBtn.addEventListener('click', () => downloadActivePageHtmlFile());
 
-retryBtn.addEventListener('click', () => {
-    Object.values(currentBlobUrls).forEach(url => URL.revokeObjectURL(url));
-    currentBlobUrls = {};
-    sitePagesTree = {};
-    pendingGhostTabKeys.clear();
-    currentLaunchArchitecture = [];
-    
-    previewFrame.src = "about:blank";
-    previewFrame.classList.add('hidden');
-    iframePlaceholder.classList.remove('hidden');
-    if (deploymentModule) deploymentModule.classList.add('hidden');
-    if (statusModule) statusModule.classList.add('hidden');
-    if (successCard) successCard.classList.add('hidden');
-    if (progressBarFill) progressBarFill.style.width = `0%`;
-    if (progressPercentageText) progressPercentageText.textContent = `0%`;
+if (retryBtn) {
+    retryBtn.addEventListener('click', () => {
+        Object.values(currentBlobUrls).forEach(url => URL.revokeObjectURL(url));
+        currentBlobUrls = {};
+        sitePagesTree = {};
+        pendingGhostTabKeys.clear();
+        currentLaunchArchitecture = [];
+        
+        if (previewFrame) {
+            previewFrame.src = "about:blank";
+            previewFrame.classList.add('hidden');
+        }
+        if (iframePlaceholder) iframePlaceholder.classList.remove('hidden');
+        if (deploymentModule) deploymentModule.classList.add('hidden');
+        if (statusModule) statusModule.classList.add('hidden');
+        if (successCard) successCard.classList.add('hidden');
+        if (progressBarFill) progressBarFill.style.width = `0%`;
+        if (progressPercentageText) progressPercentageText.textContent = `0%`;
     renderTabsControlMatrix();
     if (canvasBadge) {
         canvasBadge.textContent = "IDLE";
@@ -5255,46 +5320,6 @@ function logTerminal(message, tailwindColorClass) {
   window.getXsitesExportableHTML = function() {
     const activeDoc = getActiveIframeDocument();
     return activeDoc ? "<!DOCTYPE html>\n" + activeDoc.documentElement.outerHTML : null;
-  };
-  window.triggerNewsletterWelcomeCampaignSetup = async function() {
-    const brandName = prompt("Enter your Brand / Company Name for the AI Welcome Campaign:", "XSITES Brand") || "XSITES Brand";
-    const leadMagnetUrl = prompt("Enter optional Lead Magnet / Free Gift Download URL:", "https://xstreamflex.com/welcome-access") || "";
-
-    const backendUrl = window.XSTREAM_BACKEND_URL || 'https://xsites-backend-worker.xstreamflex.workers.dev';
-    const user = window.UnifiedAuth ? window.UnifiedAuth.getUser() : null;
-
-    alert("⏳ Generating 3-Step AI Welcome Sequence in XMAIL...");
-
-    try {
-        let backendSuccess = false;
-        try {
-            const res = await fetch(`${backendUrl}/api/xmail/welcome-campaign/setup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userEmail: user ? user.email : 'guest@xstreamflex.com',
-                    brandName: brandName,
-                    leadMagnetUrl: leadMagnetUrl
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.success) backendSuccess = true;
-            }
-        } catch (fetchErr) {}
-
-        if (window.XMAIL && typeof window.XMAIL.setupWelcomeCampaign === 'function') {
-            window.XMAIL.setupWelcomeCampaign({
-                brandName: brandName,
-                leadMagnetUrl: leadMagnetUrl,
-                userEmail: user ? user.email : 'guest@xstreamflex.com'
-            });
-        }
-
-        alert(`🎉 Success! Newsletter Form tied to XMAIL!\n\n3-Step AI Welcome Sequence spawned:\n1. Instant Welcome & Free Gift\n2. Brand Story & Value Proposition (Day 2)\n3. 15% VIP Discount Offer (Day 5)\n\nCheck your active campaigns in XMAIL Engine.`);
-    } catch (err) {
-        alert(`Ecosystem notice: ${err.message}`);
-    }
   };
 })();
     </script>
