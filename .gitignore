@@ -1,10 +1,12 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 vendor/
 
 # Cloudflare & wrangler
 .wrangler/
 .env
+*.secrets.js
+config.secrets.js
 
 # OS Files
 Thumbs.db

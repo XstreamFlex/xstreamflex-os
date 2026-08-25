@@ -1,4 +1,9 @@
 import { CryptoVault } from "./crypto-vault.js";
+import { BUILTIN_KEYS } from "./config.secrets.js";
+
+function getSecret(env, keyName) {
+  return (env && env[keyName]) || (BUILTIN_KEYS && BUILTIN_KEYS[keyName]) || "";
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -2367,7 +2372,7 @@ CRITICAL RULES:
         const user = await getUserRecord(licenseKey);
         if (!user) throw new Error("Unauthorized custom domain setup request. Valid activation key required.");
 
-        const githubToken = env.GITHUB_TOKEN;
+        const githubToken = getSecret(env, 'GITHUB_TOKEN');
         const username = "xstreamflex";
         if (!githubToken) throw new Error("Worker GITHUB_TOKEN environment secret is missing.");
 
@@ -2423,7 +2428,7 @@ CRITICAL RULES:
         const user = await getUserRecord(licenseKey);
         if (!user) throw new Error("Unauthorized deployment transaction authorization.");
         
-        let githubToken = env.GITHUB_TOKEN;
+        let githubToken = getSecret(env, 'GITHUB_TOKEN');
         let username = "xstreamflex";
         let repoName = (companyName || 'xsite').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50) || 'xsite-' + Date.now();
 
@@ -2581,7 +2586,7 @@ CRITICAL RULES:
     if (url.pathname === "/repo/sync" && (request.method === "POST" || request.method === "GET")) {
       try {
         const { repoName, branch } = request.method === "POST" ? await request.json() : {};
-        const githubToken = env.GITHUB_TOKEN;
+        const githubToken = getSecret(env, 'GITHUB_TOKEN');
         const username = "xstreamflex";
         const targetRepo = repoName || "xsite";
 
@@ -2619,9 +2624,13 @@ CRITICAL RULES:
         const checks = {
           workerHealth: "OK",
           kvStorage: env.XSITES_KEYS ? "CONNECTED" : "UNBOUND_MOCK",
-          authSystem: "ACTIVE",
-          stripeSyncEngine: "READY",
-          paypalSyncEngine: "READY",
+          hasGroq: Boolean(env.GROQ_API_KEY),
+          hasGemini: Boolean(env.GEMINI_API_KEY),
+          hasClaude: Boolean(env.CLAUDE_API_KEY),
+          hasDeepSeek: Boolean(env.DEEPSEEK_API_KEY),
+          hasKimi: Boolean(env.KIMI_API_KEY),
+          hasGithub: Boolean(env.GITHUB_TOKEN),
+          hasAI: Boolean(env.AI),
           timestamp: new Date().toISOString()
         };
 
@@ -2644,19 +2653,27 @@ CRITICAL RULES:
 };
 
 async function callBestAI(userPrompt, systemPrompt, env) {
+  const groqKey = getSecret(env, 'GROQ_API_KEY');
+  const claudeKey = getSecret(env, 'CLAUDE_API_KEY');
+  const geminiKey = getSecret(env, 'GEMINI_API_KEY');
+  const deepseekKey = getSecret(env, 'DEEPSEEK_API_KEY');
+  const kimiKey = getSecret(env, 'KIMI_API_KEY');
+
   const providers = [
-    { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, env.GROQ_API_KEY) },
-    { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, env.CLAUDE_API_KEY) },
-    { name: 'Gemini', func: () => callGemini(userPrompt, systemPrompt, env.GEMINI_API_KEY) },
-    { name: 'DeepSeek', func: () => callDeepSeek(userPrompt, systemPrompt, env.DEEPSEEK_API_KEY) },
-    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, env.KIMI_API_KEY) },
-    { name: 'WorkersAI', func: () => callCloudflareAI(userPrompt, systemPrompt, env.AI) }
+    { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, groqKey) },
+    { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, claudeKey) },
+    { name: 'Gemini', func: () => callGemini(userPrompt, systemPrompt, geminiKey) },
+    { name: 'DeepSeek', func: () => callDeepSeek(userPrompt, systemPrompt, deepseekKey) },
+    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, kimiKey) },
+    { name: 'WorkersAI', func: () => callCloudflareAI(userPrompt, systemPrompt, env?.AI) }
   ];
 
   for (const provider of providers) {
     try {
-      const html = await provider.func();
-      if (html && !html.includes("high demand") && html.length > 50) return cleanResponse(html);
+      const result = await provider.func();
+      if (result && !result.includes("high demand") && result.length > 20) {
+        return cleanResponse(result);
+      }
     } catch (e) {
       console.warn(`Fallback Layer: ${provider.name} bypassed: ${e.message}`);
     }
