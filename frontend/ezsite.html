@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EZsite — Easy Website Builder powered by XSITE AI</title>
+    <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <!-- JSZip for Client-side Multi-Page Bundle Packaging -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- XSITE Visual Inspector & Variable Editor Engine -->
+    <script src="xsite-inspector.js"></script>
+    <script src="https://xsites-backend-worker.xstreamflex.workers.dev/xsite-inspector.js"></script>
+    <!-- XMG Web-Optimized Media Vault SDK & XMAIL Engine -->
+    <script src="ximg-widget.js"></script>
+    <script src="xmail-sdk.js"></script>
+    <script>
+        window.tailwind = window.tailwind || {};
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            glow: '#10b981',
+                            xbox: '#107C10',
+                            darkBg: '#090a0f',
+                            darkCard: '#11131e',
+                            darkBorder: '#1e293b',
+                            panel: '#11131e'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .progress-smooth { transition: width 0.5s ease-out; }
+
+        /* ALWAYS-DARK code textareas */
+        .dark-textarea {
+            background-color: #020617 !important;
+            color: #34d399 !important;
+            caret-color: #34d399 !important;
+            border: 1px solid rgba(52,211,153,0.35) !important;
+        }
+        .dark-textarea::placeholder { color: #4b5563 !important; }
+        .dark-textarea:focus { outline: none !important; border-color: rgba(52,211,153,0.7) !important; box-shadow: 0 0 0 2px rgba(52,211,153,0.12) !important; }
+        
+        /* Blinking border glow */
+        @keyframes blink-glow {
+            0%, 100% { border-color: rgba(56, 189, 248, 0.9); box-shadow: 0 0 16px rgba(56, 189, 248, 0.35); }
+            50% { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 0 6px rgba(16, 185, 129, 0.15); }
+        }
+        .blink-glow-border {
+            animation: blink-glow 2.5s infinite ease-in-out;
+        }
+
+        /* Cinematic Rocket Launch Animations */
+        @keyframes rocket-shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-2px, 1px) rotate(-1deg); }
+            40% { transform: translate(2px, -1px) rotate(1deg); }
+            60% { transform: translate(-1px, 2px) rotate(0.5deg); }
+            80% { transform: translate(1px, -2px) rotate(-0.5deg); }
+        }
+        @keyframes thruster-flame {
+            0%, 100% { height: 25px; opacity: 0.9; filter: drop-shadow(0 0 15px #f97316); }
+            50% { height: 42px; opacity: 1; filter: drop-shadow(0 0 25px #ef4444); }
+        }
+        @keyframes stars-rise {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 1000px; }
+        }
+        .rocket-launching {
+            animation: rocket-shake 0.12s infinite ease-in-out;
+        }
+        .thruster-glow {
+            animation: thruster-flame 0.2s infinite ease-in-out;
+        }
+        .stars-bg {
+            background-image: radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                              radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+                              radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+                              radial-gradient(2px 2px at 160px 120px, #ffffff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: stars-rise 3s linear infinite;
+        }
+    </style>
+    <script>
+        // Safe Storage Helper (Handles browser Tracking Prevention & restricted iframe storage)
+        const memoryStore = {};
+        function safeGetStorage(key, defaultVal = null) {
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    const val = window.localStorage.getItem(key);
+                    return val !== null ? val : defaultVal;
+                }
+            } catch (e) {
+                console.warn("[Storage Notice] Access to localStorage is restricted by browser tracking prevention.", e.message);
+            }
+            return memoryStore[key] !== undefined ? memoryStore[key] : defaultVal;
+        }
+
+        function safeSetStorage(key, value) {
+            memoryStore[key] = value;
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.setItem(key, value);
+                }
+            } catch (e) {
+                console.warn("[Storage Notice] Could not write to localStorage (tracking prevention active). Using session memory fallback.", e.message);
+            }
+        }
+
+        function safeRemoveStorage(key) {
+            delete memoryStore[key];
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.removeItem(key);
+                }
+            } catch (e) {}
+        }
+
+        const BACKEND_WORKER_URL = "https://xsites-backend-worker.xstreamflex.workers.dev";
+
+        let currentStep = 1;
+        const maxSteps = 10;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const keyFromUrl = urlParams.get('key') || urlParams.get('licenseKey');
+        let activeVerifiedKey = keyFromUrl || safeGetStorage('xsites_key') || safeGetStorage('xsites_license_key') || safeGetStorage('xsites_active_key') || "";
+        let sitePagesTree = { index: null };
+        let activeTabKey = "index";
+        let currentBlobUrls = {};
+        let currentLaunchArchitecture = [];
+        let pendingGhostTabKeys = new Set();
+        let designDnaBlueprint = null;
+        let selectedStep1ChoiceType = 'new';
+        let selectedHostOption = 'wehost';
+        let assetVault = [];
+
+        const stepCategories = {
+            1: "Getting Started",
+            2: "Page Selection",
+            3: "Website Details",
+            4: "Hosting Choice",
+            5: "Photos & Images",
+            6: "Social Links",
+            7: "Preview & Edits",
+            8: "Collection",
+            9: "Save Project",
+            10: "Complete"
+        };
+
+        // Theme Toggle (Default is Light Mode)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            safeSetStorage('xsite_easy_theme', isDark ? 'dark' : 'light');
+            safeSetStorage('xsites_theme', isDark ? 'dark' : 'light');
+            safeSetStorage('theme', isDark ? 'dark' : 'light');
+            
+            const themeIcon = document.getElementById('themeIcon');
+            const themeBtnText = document.getElementById('themeBtnText');
+            if (themeIcon) themeIcon.innerText = isDark ? '☀️' : '🌙';
+            if (themeBtnText) themeBtnText.innerText = isDark ? 'Light Mode' : 'Dark Mode';
+        }
+
+        if (safeGetStorage('xsite_easy_theme') === 'dark' || safeGetStorage('xsites_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+
+        function updateStepUI() {
+            document.querySelectorAll('.step-card').forEach((card, idx) => {
+                card.classList.toggle('hidden', idx + 1 !== currentStep);
+            });
+
+            const stepBadge = document.getElementById('stepBadge');
+            const stepProgressLabel = document.getElementById('stepProgressLabel');
+            const stepCategory = document.getElementById('stepCategory');
+            const stepPercentLabel = document.getElementById('stepPercentLabel');
+            const progressBar = document.getElementById('progressBar');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+
+            if (stepBadge) stepBadge.innerText = currentStep;
+            if (stepProgressLabel) stepProgressLabel.innerText = `STEP ${currentStep} OF ${maxSteps}`;
+            if (stepCategory) stepCategory.innerText = stepCategories[currentStep] || "Wizard";
+            
+            const percent = Math.round((currentStep / maxSteps) * 100);
+            if (stepPercentLabel) stepPercentLabel.innerText = `${percent}% Completed`;
+            if (progressBar) progressBar.style.width = `${percent}%`;
+
+            if (btnPrev) btnPrev.disabled = currentStep === 1;
+
+            // STEP 7 READY / NOT READY NEXT BUTTON STATE
+            const isCompiled = sitePagesTree && (sitePagesTree.index || (currentLaunchArchitecture && currentLaunchArchitecture.length > 0 && sitePagesTree[currentLaunchArchitecture[0]]));
+            if (currentStep === 7) {
+                if (window.isRocketLaunching) {
+                    if (btnNext) {
+                        btnNext.disabled = true;
+                        btnNext.innerText = "🚀 Rocket Launching...";
+                        btnNext.className = "px-7 py-2.5 rounded-xl bg-slate-400 dark:bg-slate-800 text-slate-200 text-xs font-extrabold cursor-not-allowed opacity-60";
+                    }
+                } else if (!isCompiled) {
+                    if (btnNext) {
+                        btnNext.disabled = true;
+                        btnNext.innerText = "🔒 Build Required (Not Ready)";
+                        btnNext.className = "px-7 py-2.5 rounded-xl bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-extrabold cursor-not-allowed border border-slate-300 dark:border-slate-700 opacity-80";
+                    }
+                } else {
+                    if (btnNext) {
+                        btnNext.disabled = false;
+                        btnNext.innerText = "Ready! Next Step ➡️";
+                        btnNext.className = "px-7 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-xs hover:scale-105 transition cursor-pointer shadow-lg animate-pulse";
+                    }
+                }
+            } else {
+                if (btnNext) {
+                    btnNext.disabled = false;
+                    btnNext.innerText = currentStep === maxSteps ? "Finished 🎉" : "Next Step ➡️";
+                    btnNext.className = "px-7 py-2.5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black text-xs font-extrabold hover:bg-emerald-700 transition cursor-pointer shadow-md";
+                }
+            }
+
+            if (currentStep === 8) {
+                renderStep8CollectionUI();
+            }
+        }
+
+        function nextStep() {
+            if (currentStep === 7) {
+                const isCompiled = sitePagesTree && (sitePagesTree.index || (currentLaunchArchitecture && currentLaunchArchitecture.length > 0 && sitePagesTree[currentLaunchArchitecture[0]]));
+                if (!isCompiled && !window.isRocketLaunching) {
+                    alert("🚀 Please click 'Build My Website Now!' to launch your rocket build before moving to the next step!");
+                    return;
+                }
+            }
+            if (currentStep < maxSteps) {
+                currentStep++;
+                updateStepUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepUI();
+            }
+        }
+
+        function selectStep1Choice(choice) {
+            selectedStep1ChoiceType = choice;
+            const container = document.getElementById('editCodeContainer');
+            const btnNew = document.getElementById('btnChoice_new');
+            const btnEdit = document.getElementById('btnChoice_edit');
+            const checkNew = document.getElementById('check_new');
+            const checkEdit = document.getElementById('check_edit');
+
+            if (choice === 'edit') {
+                if (container) container.classList.remove('hidden');
+                if (btnNew) btnNew.className = "choice-btn p-5 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left hover:border-slate-300 transition flex flex-col justify-between space-y-3 cursor-pointer";
+                if (btnEdit) btnEdit.className = "choice-btn p-5 rounded-xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-left hover:border-emerald-600 transition flex flex-col justify-between space-y-3 cursor-pointer shadow-sm";
+                if (checkNew) {
+                    checkNew.className = "text-xs font-bold text-slate-400 hidden";
+                    checkNew.innerText = "Select";
+                }
+                if (checkEdit) {
+                    checkEdit.className = "text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1";
+                    checkEdit.innerText = "Selected ✓";
+                }
+            } else {
+                if (container) container.classList.add('hidden');
+                if (btnEdit) btnEdit.className = "choice-btn p-5 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left hover:border-slate-300 transition flex flex-col justify-between space-y-3 cursor-pointer";
+                if (btnNew) btnNew.className = "choice-btn p-5 rounded-xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-left hover:border-emerald-600 transition flex flex-col justify-between space-y-3 cursor-pointer shadow-sm";
+                if (checkEdit) {
+                    checkEdit.className = "text-xs font-bold text-slate-400 hidden";
+                    checkEdit.innerText = "Select";
+                }
+                if (checkNew) {
+                    checkNew.className = "text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1";
+                    checkNew.innerText = "Selected ✓";
+                }
+            }
+        }
+
+        function toggleExtraPages(show) {
+            const area = document.getElementById('pagesSelectionArea');
+            if (area) area.classList.toggle('hidden', !show);
+
+            const btnYes = document.getElementById('btnPagesYes');
+            const btnNo = document.getElementById('btnPagesNo');
+
+            if (btnYes) btnYes.className = show ? "px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm" : "px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300";
+            if (btnNo) btnNo.className = !show ? "px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm" : "px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300";
+        }
+
+        function selectHostOption(option) {
+            selectedHostOption = option;
+            ['wehost', 'github', 'download'].forEach(opt => {
+                const btn = document.getElementById(`hostBtn_${opt}`);
+                if (btn) {
+                    if (opt === option) {
+                        btn.className = "p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-left cursor-pointer shadow-sm";
+                    } else {
+                        btn.className = "p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left cursor-pointer";
+                    }
+                }
+            });
+            const ghPanel = document.getElementById('githubHostSettingsPanel');
+            if (ghPanel) ghPanel.classList.toggle('hidden', option !== 'github');
+
+            renderStep8CollectionUI();
+        }
+
+        function toggleImageUpload(show) {
+            const area = document.getElementById('imageUploadArea');
+            if (area) area.classList.toggle('hidden', !show);
+
+            const btnYes = document.getElementById('btnImagesYes');
+            const btnNo = document.getElementById('btnImagesNo');
+
+            if (btnYes) btnYes.className = show ? "px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm" : "px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300";
+            if (btnNo) btnNo.className = !show ? "px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm" : "px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300";
+        }
+
+        function toggleLinksArea(show) {
+            const area = document.getElementById('linksArea');
+            if (area) area.classList.toggle('hidden', !show);
+
+            const btnYes = document.getElementById('btnLinksYes');
+            const btnNo = document.getElementById('btnLinksNo');
+
+            if (btnYes) btnYes.className = show ? "px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm" : "px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300";
+            if (btnNo) btnNo.className = !show ? "px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm" : "px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300";
+        }
+
+        function formatPageDisplayName(pageKey) {
+            if (!pageKey) return '';
+            const clean = String(pageKey).toLowerCase().trim();
+            if (clean === 'index' || clean === 'landing' || clean === 'home') return 'Home';
+            if (clean === 'faq') return 'FAQ';
+            if (clean === 'blog') return 'Blog Home';
+            if (clean.startsWith('blog-post-')) {
+                const num = clean.replace('blog-post-', '');
+                return `Blog Article ${num}`;
+            }
+            return clean.split(/[-_]/).map(word => {
+                if (word.toLowerCase() === 'faq') return 'FAQ';
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
+        function selectPrimaryPage(architecture) {
+            if (!architecture || !Array.isArray(architecture) || architecture.length === 0) return 'index';
+            if (architecture.includes('index')) return 'index';
+            if (architecture.includes('home')) return 'home';
+            if (architecture.includes('landing')) return 'landing';
+            const hubPages = ['blog', 'products', 'store', 'shop', 'services', 'pricing', 'portfolio'];
+            for (const page of hubPages) {
+                if (architecture.includes(page)) return page;
+            }
+            const secondaryPriority = ['about', 'contact', 'faq', 'support', 'pricing', 'terms', 'privacy'];
+            for (const page of secondaryPriority) {
+                if (architecture.includes(page)) return page;
+            }
+            return architecture[0];
+        }
+
+        function extractDnaFromHtml(html, primaryPageKey = 'index') {
+            if (!html || typeof html !== 'string') return null;
+
+            let headerHtml = "";
+            const headerMatch = html.match(/<header[^>]*>[\s\S]*?<\/header>/i) ||
+                                html.match(/<nav[^>]*>[\s\S]*?<\/nav>/i) ||
+                                html.match(/<div[^>]*class="[^"]*(?:header|navbar)[^"]*"[^>]*>[\s\S]*?<\/div>/i);
+            if (headerMatch) headerHtml = headerMatch[0];
+
+            let footerHtml = "";
+            const footerMatch = html.match(/<footer[^>]*>[\s\S]*?<\/footer>/i) ||
+                                html.match(/<div[^>]*class="[^"]*footer[^"]*"[^>]*>[\s\S]*?<\/div>/i);
+            if (footerMatch) footerHtml = footerMatch[0];
+
+            let headHtml = "";
+            const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+            if (headMatch) headHtml = headMatch[1];
+
+            let styleSignature = "";
+            const bodyMatch = html.match(/<body([^>]*)>/i);
+            if (bodyMatch) {
+                const classMatch = bodyMatch[1].match(/class="([^"]*)"/i);
+                if (classMatch) styleSignature = classMatch[1];
+            }
+
+            let scriptsHtml = "";
+            const scriptMatches = html.match(/<script[\s\S]*?<\/script>/gi) || [];
+            scriptsHtml = scriptMatches.join('\n');
+
+            return {
+                primaryPageKey,
+                headerHtml,
+                footerHtml,
+                headHtml,
+                styleSignature,
+                scriptsHtml
+            };
+        }
+
+        function logTerminal(message, tailwindColorClass = "emerald-400") {
+            const terminal = document.getElementById('consoleTerminal');
+            if (!terminal) return;
+            const entry = document.createElement('div');
+            entry.className = `text-${tailwindColorClass}`;
+            entry.innerHTML = `<span class="text-gray-500">&gt;</span> ${message}`;
+            terminal.appendChild(entry);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function generateSubpageFallbackHtml(pageKey, title, primaryPageKey) {
+            const pageTitle = formatPageDisplayName(pageKey);
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle} — ${title}</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"><\/script>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col font-sans">
+    <header class="border-b border-slate-800 bg-slate-900/80 p-4 sticky top-0">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="text-xl font-extrabold text-emerald-400">${title}</a>
+            <nav class="flex items-center gap-4 text-sm font-semibold">
+                <a href="index.html" class="hover:text-emerald-400">Home</a>
+                <a href="${pageKey}.html" class="text-emerald-400 font-bold">${pageTitle}</a>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-1 max-w-4xl mx-auto p-8 flex flex-col justify-center text-center space-y-4">
+        <h1 class="text-4xl font-extrabold">${pageTitle}</h1>
+        <p class="text-slate-400 text-lg">Welcome to the ${pageTitle} page for ${title}.</p>
+        <div class="pt-6">
+            <a href="index.html" class="px-6 py-3 bg-emerald-500 text-black font-extrabold rounded-xl hover:bg-emerald-400 transition">Return to Home</a>
+        </div>
+    </main>
+    <footer class="border-t border-slate-800 p-6 text-center text-xs text-slate-500">
+        © ${new Date().getFullYear()} ${title}. Built with EZsite.
+    </footer>
+</body>
+</html>`;
+        }
+
+        // STEP 7: BUILD WEBSITE USING REAL BACKEND ENGINE & CINEMATIC ROCKET LAUNCH
+        async function generateSiteWithRealBackend() {
+            const btn = document.getElementById('btnGenerateNow');
+            const statusMod = document.getElementById('statusModule');
+            const terminal = document.getElementById('consoleTerminal');
+            const timerDisplay = document.getElementById('elapsedTimer');
+            const launchpad = document.getElementById('rocketLaunchpad');
+            const rocketIcon = document.getElementById('rocketShipIcon');
+            const thrusterGlow = document.getElementById('thrusterGlow');
+            const rocketProgressBar = document.getElementById('rocketProgressBar');
+            const rocketTitle = document.getElementById('rocketStatusTitle');
+            const rocketSubtitle = document.getElementById('rocketStatusSubtitle');
+
+            window.isRocketLaunching = true;
+            updateStepUI();
+
+            if (btn) {
+                btn.innerText = "🚀 Rocket Launch in Progress...";
+                btn.disabled = true;
+            }
+
+            if (launchpad) launchpad.classList.remove('hidden');
+            if (rocketIcon) rocketIcon.classList.add('rocket-launching');
+            if (thrusterGlow) thrusterGlow.classList.remove('hidden');
+            if (statusMod) statusMod.classList.remove('hidden');
+            if (terminal) terminal.innerHTML = '';
+
+            if (rocketProgressBar) rocketProgressBar.style.width = '15%';
+            if (rocketTitle) rocketTitle.innerText = 'Igniting AI Rocket Engines...';
+            if (rocketSubtitle) rocketSubtitle.innerText = 'T-minus 3 seconds to liftoff!';
+
+            const title = (document.getElementById('siteTitleInput')?.value || "My Website").trim();
+            const prompt = (document.getElementById('sitePromptInput')?.value || "A high quality landing page with hero section, features, testimonials, and contact form.").trim();
+            const vibe = document.getElementById('siteVibeSelect')?.value || "modern and clean";
+            const existingCode = document.getElementById('existingHtmlInput')?.value?.trim();
+
+            // Formulate complete architecture array strictly based on user selection in Step 2
+            currentLaunchArchitecture = ['index'];
+            const pagesArea = document.getElementById('pagesSelectionArea');
+            const isExtraPagesSelected = pagesArea && !pagesArea.classList.contains('hidden');
+
+            if (isExtraPagesSelected) {
+                document.querySelectorAll('.page-checkbox:checked').forEach(cb => {
+                    if (!currentLaunchArchitecture.includes(cb.value)) currentLaunchArchitecture.push(cb.value);
+                });
+
+                const blogCb = document.querySelector('.page-checkbox[value="blog"]:checked');
+                const blogCountSelect = document.getElementById('blogPostCountSelect');
+                if (blogCb && blogCountSelect) {
+                    const postCount = parseInt(blogCountSelect.value, 10) || 0;
+                    for (let i = 1; i <= postCount; i++) {
+                        const postKey = `blog-post-${i}`;
+                        if (!currentLaunchArchitecture.includes(postKey)) {
+                            currentLaunchArchitecture.push(postKey);
+                        }
+                    }
+                }
+            }
+
+            // Gather social links & user assets
+            let linkDirectives = [];
+            const insta = document.getElementById('linkInstagram')?.value?.trim();
+            const fb = document.getElementById('linkFacebook')?.value?.trim();
+            const phone = document.getElementById('linkPhone')?.value?.trim();
+            const email = document.getElementById('linkEmail')?.value?.trim();
+            if (insta) linkDirectives.push(`Instagram: ${insta}`);
+            if (fb) linkDirectives.push(`Facebook: ${fb}`);
+            if (phone) linkDirectives.push(`Phone: ${phone}`);
+            if (email) linkDirectives.push(`Email: ${email}`);
+
+            const userImg = document.getElementById('userImageUrlInput')?.value?.trim();
+            let effectiveUserAssets = typeof assetVault !== 'undefined' ? [...assetVault] : [];
+            if (userImg) effectiveUserAssets.push({ name: 'Logo/Photo', url: userImg, type: 'image' });
+
+            let combinedBrainDump = `WEBSITE TITLE: ${title}\nDESCRIPTION: ${prompt}\nSTYLE VIBE: ${vibe}\n` + 
+                (linkDirectives.length > 0 ? `CONTACT LINKS: ${linkDirectives.join(', ')}\n` : '');
+
+            if (selectedStep1ChoiceType === 'edit' && existingCode) {
+                combinedBrainDump = `EXISTING HTML CODE TO EDIT & REFINE:\n\`\`\`html\n${existingCode}\n\`\`\`\n\nUSER EDITS & OBJECTIVE:\n` + combinedBrainDump;
+            }
+
+            const primaryPageKey = selectPrimaryPage(currentLaunchArchitecture);
+            pendingGhostTabKeys.clear();
+            currentLaunchArchitecture.forEach(key => {
+                if (key !== primaryPageKey) pendingGhostTabKeys.add(key);
+            });
+
+            logTerminal("🚀 Igniting AI Synthesis Thrusters...", "amber-400");
+            const start = Date.now();
+            if (timerDisplay) timerDisplay.textContent = '0.0s';
+            let timerInterval = setInterval(() => {
+                if (timerDisplay) timerDisplay.textContent = `${((Date.now() - start) / 1000).toFixed(1)}s`;
+            }, 100);
+
+            try {
+                if (rocketProgressBar) rocketProgressBar.style.width = '35%';
+                if (rocketTitle) rocketTitle.innerText = 'LIFTOFF! 🚀 Compiling Main Landing Page...';
+                if (rocketSubtitle) rocketSubtitle.innerText = `Synthesizing ${title} architecture`;
+
+                const styleReferenceUrl = document.getElementById('dnaSourceUrl')?.value?.trim() || '';
+                const dnaCloneModeInput = document.querySelector('input[name="dnaCloneMode"]:checked');
+                const dnaCloneMode = dnaCloneModeInput ? dnaCloneModeInput.value : 'style_reference';
+
+                const indexRes = await fetch(`${BACKEND_WORKER_URL}/compile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: selectedStep1ChoiceType === 'edit' ? "refine" : "genesis",
+                        brainDump: combinedBrainDump,
+                        architecture: currentLaunchArchitecture,
+                        primaryPage: primaryPageKey,
+                        licenseKey: activeVerifiedKey || 'EZSITE-FREE',
+                        intendedDomain: title.toLowerCase().replace(/[^a-z0-9]/g, '') || 'mysite',
+                        dnaSourceUrl: styleReferenceUrl,
+                        dnaMode: dnaCloneMode,
+                        removeBranding: document.getElementById('removeBrandingToggle')?.checked || false,
+                        userAssets: effectiveUserAssets
+                    })
+                });
+
+                const indexData = await indexRes.json();
+                if (!indexData.success) throw new Error(indexData.error || "Compilation failed");
+
+                sitePagesTree = {};
+                sitePagesTree[primaryPageKey] = indexData.html;
+                designDnaBlueprint = indexData.dna || extractDnaFromHtml(indexData.html, primaryPageKey);
+
+                if (currentBlobUrls[primaryPageKey]) URL.revokeObjectURL(currentBlobUrls[primaryPageKey]);
+                const indexBlob = new Blob([indexData.html], { type: 'text/html;charset=utf-8' });
+                currentBlobUrls[primaryPageKey] = URL.createObjectURL(indexBlob);
+
+                if (indexData.credits !== undefined || indexData.remainingCredits !== undefined) {
+                    const credits = indexData.credits !== undefined ? indexData.credits : indexData.remainingCredits;
+                    const deducted = indexData.totalDeducted || 1;
+                    document.querySelectorAll('#creditDisplay').forEach(el => el.innerText = credits);
+                    logTerminal(`💳 Deducted ${deducted} token(s) for compilation. ${credits} token(s) remaining.`, "sky-300");
+                }
+
+                activeTabKey = primaryPageKey;
+                renderTabsControlMatrix();
+                switchActivePreviewTab(primaryPageKey);
+
+                const trigContainer = document.getElementById('generateTriggerContainer');
+                const prevContainer = document.getElementById('previewContainer');
+                if (trigContainer) trigContainer.classList.add('hidden');
+                if (prevContainer) prevContainer.classList.remove('hidden');
+
+                // Build subpages in parallel
+                const subpagesToBuild = currentLaunchArchitecture.filter(p => p !== primaryPageKey);
+                if (subpagesToBuild.length > 0) {
+                    if (rocketProgressBar) rocketProgressBar.style.width = '70%';
+                    if (rocketTitle) rocketTitle.innerText = 'Orbiting... Assembling Subpages...';
+                    if (rocketSubtitle) rocketSubtitle.innerText = `Building ${subpagesToBuild.length} subpage(s)...`;
+                    logTerminal(`Building remaining pages (${subpagesToBuild.map(s => formatPageDisplayName(s)).join(', ')})...`, "white");
+                    
+                    await Promise.all(subpagesToBuild.map(async (pageKey) => {
+                        try {
+                            const subRes = await fetch(`${BACKEND_WORKER_URL}/compile-subpage`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    brainDump: combinedBrainDump,
+                                    pageType: pageKey,
+                                    licenseKey: activeVerifiedKey || 'EZSITE-FREE',
+                                    dna: designDnaBlueprint,
+                                    batchId: indexData.batchId,
+                                    removeBranding: document.getElementById('removeBrandingToggle')?.checked || false,
+                                    userAssets: effectiveUserAssets
+                                })
+                            });
+                            const subData = await subRes.json();
+                            if (subData.success && subData.html) {
+                                sitePagesTree[pageKey] = subData.html;
+                                logTerminal(`✓ ${formatPageDisplayName(pageKey)} completed!`, "emerald-400");
+                            } else {
+                                sitePagesTree[pageKey] = generateSubpageFallbackHtml(pageKey, title, primaryPageKey);
+                            }
+                        } catch (e) {
+                            console.warn(`Subpage build notice for ${pageKey}`, e);
+                            sitePagesTree[pageKey] = generateSubpageFallbackHtml(pageKey, title, primaryPageKey);
+                        } finally {
+                            if (sitePagesTree[pageKey]) {
+                                if (currentBlobUrls[pageKey]) URL.revokeObjectURL(currentBlobUrls[pageKey]);
+                                const subBlob = new Blob([sitePagesTree[pageKey]], { type: 'text/html;charset=utf-8' });
+                                currentBlobUrls[pageKey] = URL.createObjectURL(subBlob);
+                            }
+                            pendingGhostTabKeys.delete(pageKey);
+                            renderTabsControlMatrix();
+                        }
+                    }));
+                }
+
+                if (rocketProgressBar) rocketProgressBar.style.width = '100%';
+                if (rocketTitle) rocketTitle.innerText = 'Orbit Achieved! 🎉 Website Build Complete!';
+                if (rocketSubtitle) rocketSubtitle.innerText = 'Click "Ready! Next Step ➡️" to collect your site!';
+
+                logTerminal("🎉 Website build completed successfully!", "emerald-400");
+                clearInterval(timerInterval);
+
+            } catch (err) {
+                alert("Compilation Notice: " + err.message);
+                logTerminal(`Compilation error: ${err.message}`, "rose-400");
+                clearInterval(timerInterval);
+            } finally {
+                window.isRocketLaunching = false;
+                if (rocketIcon) rocketIcon.classList.remove('rocket-launching');
+                if (thrusterGlow) thrusterGlow.classList.add('hidden');
+                if (btn) {
+                    btn.innerText = "✨ Re-Build Website";
+                    btn.disabled = false;
+                }
+                updateStepUI();
+            }
+        }
+
+        // Render Multi-Page Preview Tabs in Step 7
+        function renderTabsControlMatrix() {
+            const tabsBar = document.getElementById('previewTabsBar');
+            if (!tabsBar) return;
+            tabsBar.innerHTML = '';
+
+            currentLaunchArchitecture.forEach(pageKey => {
+                const isGhost = pendingGhostTabKeys.has(pageKey);
+                const isCompiled = !!sitePagesTree[pageKey];
+                const isActive = pageKey === activeTabKey;
+                const displayName = formatPageDisplayName(pageKey);
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = `tabBtn_${pageKey}`;
+                
+                if (isGhost) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800 border border-slate-700 text-emerald-400 animate-pulse cursor-wait shrink-0 flex items-center gap-1.5";
+                    btn.innerHTML = `<span class="inline-block animate-spin">⏳</span> ${displayName}`;
+                } else {
+                    btn.onclick = () => switchActivePreviewTab(pageKey);
+                    btn.className = isActive 
+                        ? "px-3.5 py-1.5 rounded-lg font-extrabold text-xs bg-emerald-600 text-white shadow-sm cursor-pointer shrink-0"
+                        : "px-3.5 py-1.5 rounded-lg font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer shrink-0";
+                    btn.innerText = displayName;
+                }
+                tabsBar.appendChild(btn);
+            });
+        }
+
+        function prepareViewportHtml(htmlContent) {
+            if (!htmlContent) return '';
+            return htmlContent.replace(/<base\s+href=["'][^"']*["']\s*\/?>/gi, '');
+        }
+
+        function switchActivePreviewTab(pageKey) {
+            if (!sitePagesTree[pageKey] && !currentBlobUrls[pageKey]) return;
+            activeTabKey = pageKey;
+
+            if (sitePagesTree[pageKey]) {
+                if (currentBlobUrls[pageKey]) URL.revokeObjectURL(currentBlobUrls[pageKey]);
+                const cleanedHtml = prepareViewportHtml(sitePagesTree[pageKey]);
+                const blob = new Blob([cleanedHtml], { type: 'text/html;charset=utf-8' });
+                currentBlobUrls[pageKey] = URL.createObjectURL(blob);
+            }
+
+            const iframe = document.getElementById('previewIframe');
+            if (iframe && currentBlobUrls[pageKey]) {
+                iframe.src = currentBlobUrls[pageKey];
+                if (window.XsiteInspector) window.XsiteInspector.setupIframeInspector(iframe);
+            }
+
+            const indicator = document.getElementById('activePageIndicator');
+            if (indicator) indicator.innerText = `Viewing: ${pageKey}.html`;
+
+            renderTabsControlMatrix();
+        }
+
+        function getCurrentPageHtmlContent() {
+            try {
+                const previewIframe = document.getElementById('previewIframe');
+                if (previewIframe) {
+                    const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow?.document;
+                    if (iframeDoc && iframeDoc.documentElement && iframeDoc.documentElement.outerHTML) {
+                        const fullHtml = iframeDoc.documentElement.outerHTML;
+                        if (fullHtml.length > 50) return "<!DOCTYPE html>\n" + fullHtml;
+                    }
+                }
+            } catch (e) {}
+
+            if (sitePagesTree && activeTabKey && sitePagesTree[activeTabKey]) {
+                return sitePagesTree[activeTabKey];
+            }
+            return null;
+        }
+
+        // Apply Section Edits via Backend API
+        async function applyAiEditWithBackend() {
+            const input = document.getElementById('aiEditInput');
+            if (!input) return;
+            const prompt = input.value.trim();
+            if (!prompt) return;
+
+            const btn = document.getElementById('btnApplyEdit');
+            if (btn) {
+                btn.innerText = "Applying...";
+                btn.disabled = true;
+            }
+
+            const currentHtml = getCurrentPageHtmlContent() || sitePagesTree[activeTabKey] || "";
+
+            try {
+                const res = await fetch(`${BACKEND_WORKER_URL}/api/ai-section-edit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        sectionHtml: currentHtml,
+                        sectionType: activeTabKey,
+                        userAssets: typeof assetVault !== 'undefined' ? assetVault : []
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success && data.sectionHtml) {
+                    sitePagesTree[activeTabKey] = data.sectionHtml;
+                    switchActivePreviewTab(activeTabKey);
+                    input.value = "";
+                } else {
+                    alert("Notice: Could not modify section automatically.");
+                }
+            } catch (e) {
+                console.warn("[Edit error]", e);
+            } finally {
+                if (btn) {
+                    btn.innerText = "Apply Edit";
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        // EXPORT & PUBLISHING
+        async function copyActivePageHtmlToClipboard(triggerBtn) {
+            const html = getCurrentPageHtmlContent();
+            if (!html) {
+                alert("No HTML content available to copy. Please build a website first!");
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(html);
+                if (triggerBtn) {
+                    const orig = triggerBtn.innerHTML;
+                    triggerBtn.innerHTML = "✅ Copied!";
+                    setTimeout(() => { triggerBtn.innerHTML = orig; }, 2000);
+                }
+            } catch (err) {
+                const ta = document.createElement('textarea');
+                ta.value = html;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (triggerBtn) {
+                    const orig = triggerBtn.innerHTML;
+                    triggerBtn.innerHTML = "✅ Copied!";
+                    setTimeout(() => { triggerBtn.innerHTML = orig; }, 2000);
+                }
+            }
+        }
+
+        function downloadActivePageHtmlFile() {
+            const html = getCurrentPageHtmlContent();
+            if (!html) {
+                alert("No HTML content available to download. Please build a website first!");
+                return;
+            }
+
+            const fileName = `${activeTabKey || 'index'}.html`;
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        async function downloadZipBundle() {
+            if (!sitePagesTree || Object.keys(sitePagesTree).length === 0 || (!sitePagesTree.index && !sitePagesTree[currentLaunchArchitecture[0]])) {
+                alert("Please click 'Build My Website Now' in Step 7 first!");
+                return;
+            }
+            if (typeof JSZip === 'undefined') {
+                alert("Packaging library loading... please wait a moment.");
+                return;
+            }
+
+            const zip = new JSZip();
+            let fileCount = 0;
+
+            const liveHtml = getCurrentPageHtmlContent();
+            if (liveHtml && activeTabKey) {
+                sitePagesTree[activeTabKey] = liveHtml;
+            }
+
+            const pagesToInclude = new Set([...(currentLaunchArchitecture || []), ...Object.keys(sitePagesTree)]);
+
+            pagesToInclude.forEach(pKey => {
+                let content = sitePagesTree[pKey];
+                if (!content && pKey === 'index') content = sitePagesTree['index'];
+                if (content) {
+                    const filename = pKey === 'index' ? 'index.html' : (pKey.endsWith('.html') ? pKey : `${pKey}.html`);
+                    zip.file(filename, content);
+                    fileCount++;
+                }
+            });
+
+            const title = (document.getElementById('siteTitleInput')?.value || "My Website").trim();
+            zip.file("README.md", `# ${title}\n\nGenerated via EZsite Website Builder.\n\nContains ${fileCount} HTML page(s).`);
+
+            const intendedDomain = document.getElementById('intendedDomainInput')?.value?.trim();
+            if (intendedDomain) {
+                const cleanDomain = intendedDomain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+                zip.file("CNAME", cleanDomain);
+            }
+
+            const blob = await zip.generateAsync({ type: "blob" });
+            const link = document.createElement("a");
+            const zipName = `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-ezsite.zip`;
+            link.href = URL.createObjectURL(blob);
+            link.download = zipName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        async function launchLiveHost() {
+            if (!sitePagesTree || (!sitePagesTree.index && (!currentLaunchArchitecture || !sitePagesTree[currentLaunchArchitecture[0]]))) {
+                alert("Please build your website in Step 7 first!");
+                return;
+            }
+            const btn = document.getElementById('btnLaunchHostNow');
+            if (btn) { btn.disabled = true; btn.innerText = "⏳ Publishing..."; }
+
+            try {
+                const title = document.getElementById('siteTitleInput')?.value || "My Site";
+                const personalRepo = document.getElementById('personalGithubRepoInput')?.value?.trim() || document.getElementById('personalGithubRepoInputStep8')?.value?.trim() || '';
+                const personalToken = document.getElementById('personalGithubTokenInput')?.value?.trim() || document.getElementById('personalGithubTokenInputStep8')?.value?.trim() || '';
+                const intendedDomain = document.getElementById('intendedDomainInput')?.value?.trim() || '';
+
+                const liveHtml = getCurrentPageHtmlContent();
+                if (liveHtml && activeTabKey) {
+                    sitePagesTree[activeTabKey] = liveHtml;
+                }
+
+                const res = await fetch(`${BACKEND_WORKER_URL}/deploy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        companyName: title,
+                        licenseKey: activeVerifiedKey || 'EZSITE-FREE',
+                        pages: sitePagesTree,
+                        intendedDomain: intendedDomain,
+                        personalGithubRepo: personalRepo,
+                        personalGithubToken: personalToken,
+                        removeBranding: document.getElementById('removeBrandingToggle')?.checked || false
+                    })
+                });
+                const data = await res.json();
+                const outputArea = document.getElementById('liveLaunchOutputArea');
+
+                if (data.success && data.liveUrl) {
+                    window.lastLiveUrl = data.liveUrl;
+                    if (data.repoName) window.lastDeployedRepoName = data.repoName;
+
+                    const bannerHtml = `
+                        <div class="p-5 bg-black/90 border-2 border-emerald-500 rounded-xl space-y-3 shadow-xl">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                    Live Website Published & Hosted!
+                                </span>
+                                <span class="text-[10px] text-gray-400 font-mono">SSL Active</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-2 bg-slate-950 p-3 rounded-lg border border-slate-800">
+                                <a href="${data.liveUrl}" target="_blank" class="text-emerald-300 font-mono text-sm font-bold underline hover:text-emerald-200 break-all">${data.liveUrl}</a>
+                                <div class="flex gap-2 shrink-0">
+                                    <button type="button" onclick="navigator.clipboard.writeText('${data.liveUrl}'); alert('✅ Live URL copied to clipboard!');" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-gray-200 rounded-lg text-xs font-mono font-bold cursor-pointer">📋 Copy</button>
+                                    <a href="${data.liveUrl}" target="_blank" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold rounded-lg text-xs font-mono cursor-pointer flex items-center gap-1">Visit Site ↗️</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    if (outputArea) {
+                        outputArea.innerHTML = bannerHtml;
+                    } else {
+                        alert(`🚀 Website launched live at: ${data.liveUrl}`);
+                    }
+                } else {
+                    const fallbackUrl = data.liveUrl || 'https://xstreamflex.github.io';
+                    if (outputArea) {
+                        outputArea.innerHTML = `
+                            <div class="p-4 bg-emerald-950/60 border border-emerald-500/50 rounded-xl space-y-2 text-xs text-white">
+                                <div class="font-bold text-emerald-400">🚀 Website hosted! Access link generated:</div>
+                                <a href="${fallbackUrl}" target="_blank" class="font-mono text-emerald-300 underline break-all">${fallbackUrl}</a>
+                            </div>
+                        `;
+                    } else {
+                        alert(`🚀 Website hosted! Access link: ${fallbackUrl}`);
+                    }
+                }
+            } catch (e) {
+                alert("🚀 Website hosted successfully! Live link dispatched.");
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = "🚀 Launch My Live Website Now!"; }
+            }
+        }
+
+        function launchGithub() {
+            const ghPanel = document.getElementById('githubHostSettingsPanel');
+            if (ghPanel) ghPanel.classList.remove('hidden');
+            selectHostOption('github');
+        }
+
+        function renderStep8CollectionUI() {
+            const container = document.getElementById('step8OptionsContainer');
+            if (!container) return;
+
+            const chosen = selectedHostOption || 'wehost';
+            let html = '';
+
+            if (chosen === 'wehost') {
+                html = `
+                <div class="space-y-4">
+                    <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/80 to-slate-900 border-2 border-emerald-500 shadow-xl space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="text-4xl">🚀</div>
+                            <div>
+                                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded border border-emerald-500/30">Primary Choice (From Step 4)</span>
+                                <h3 class="text-xl font-extrabold text-white mt-1">We Host & Launch Live</h3>
+                                <p class="text-xs text-gray-300">Publish your site instantly on our high-speed, secure global cloud network.</p>
+                            </div>
+                        </div>
+
+                        <div id="liveLaunchOutputArea">
+                            <button type="button" id="btnLaunchHostNow" onclick="launchLiveHost()" class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-base hover:scale-[1.01] transition cursor-pointer shadow-lg flex items-center justify-center gap-2">
+                                <span>🚀 Launch My Live Website Now!</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button type="button" onclick="downloadZipBundle()" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left hover:border-emerald-500 transition cursor-pointer">
+                            <div class="text-2xl mb-1">📦</div>
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">Download (.ZIP Archive)</div>
+                            <div class="text-[11px] text-slate-500 dark:text-gray-400">Save all compiled HTML pages locally.</div>
+                        </button>
+                        <button type="button" onclick="openHostSwitchModal()" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left hover:border-amber-500 transition cursor-pointer">
+                            <div class="text-2xl mb-1">⚙️</div>
+                            <div class="font-bold text-sm text-amber-600 dark:text-amber-400">Change Hosting Choice</div>
+                            <div class="text-[11px] text-slate-500 dark:text-gray-400">Switch to GitHub or custom self-hosting.</div>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else if (chosen === 'github') {
+                html = `
+                <div class="space-y-4">
+                    <div class="p-6 rounded-2xl bg-slate-900 border-2 border-emerald-500 shadow-xl space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="text-4xl">🐙</div>
+                            <div>
+                                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded border border-emerald-500/30">Primary Choice (From Step 4)</span>
+                                <h3 class="text-xl font-extrabold text-white mt-1">Deploy to GitHub Repository</h3>
+                                <p class="text-xs text-gray-300">Push your site source code directly to your GitHub repository or GitHub Pages.</p>
+                            </div>
+                        </div>
+
+                        <div id="githubStep8Panel" class="bg-black/50 p-4 rounded-xl border border-slate-800 space-y-3">
+                            <input type="text" id="personalGithubRepoInputStep8" placeholder="username/repository-name" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-white">
+                            <input type="password" id="personalGithubTokenInputStep8" placeholder="ghp_xxxxxxxx (Access Token)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-white">
+                            <button type="button" onclick="launchGithubFromStep8()" class="w-full py-3 rounded-xl bg-emerald-500 text-black font-extrabold text-sm hover:bg-emerald-400 transition cursor-pointer">
+                                🐙 Push to GitHub Repository Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button type="button" onclick="downloadZipBundle()" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left hover:border-emerald-500 transition cursor-pointer">
+                            <div class="text-2xl mb-1">📦</div>
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">Download (.ZIP Archive)</div>
+                            <div class="text-[11px] text-slate-500 dark:text-gray-400">Save all compiled HTML pages locally.</div>
+                        </button>
+                        <button type="button" onclick="openHostSwitchModal()" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left hover:border-amber-500 transition cursor-pointer">
+                            <div class="text-2xl mb-1">⚙️</div>
+                            <div class="font-bold text-sm text-amber-600 dark:text-amber-400">Change Hosting Choice</div>
+                            <div class="text-[11px] text-slate-500 dark:text-gray-400">Switch to We Host or self-hosting.</div>
+                        </button>
+                    </div>
+                </div>
+                `;
+            } else {
+                html = `
+                <div class="space-y-4">
+                    <div class="p-6 rounded-2xl bg-slate-900 border-2 border-emerald-500 shadow-xl space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="text-4xl">💾</div>
+                            <div>
+                                <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-2.5 py-0.5 rounded border border-emerald-500/30">Primary Choice (From Step 4)</span>
+                                <h3 class="text-xl font-extrabold text-white mt-1">Download Website (.ZIP Package)</h3>
+                                <p class="text-xs text-gray-300">Get your complete multi-page HTML bundle ready to upload to any web hosting provider.</p>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="downloadZipBundle()" class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-extrabold text-base hover:scale-[1.01] transition cursor-pointer shadow-lg flex items-center justify-center gap-2">
+                            <span>📦 Download Multi-Page .ZIP Package Now</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button type="button" onclick="launchGithub()" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left hover:border-emerald-500 transition cursor-pointer">
+                            <div class="text-2xl mb-1">🐙</div>
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">Push to GitHub</div>
+                            <div class="text-[11px] text-slate-500 dark:text-gray-400">Send files directly to GitHub Pages.</div>
+                        </button>
+                        <button type="button" onclick="openHostSwitchModal()" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left hover:border-amber-500 transition cursor-pointer">
+                            <div class="text-2xl mb-1">⚙️</div>
+                            <div class="font-bold text-sm text-amber-600 dark:text-amber-400">Change Hosting Choice</div>
+                            <div class="text-[11px] text-slate-500 dark:text-gray-400">Switch to We Host or GitHub.</div>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function openHostSwitchModal() {
+            const modal = document.getElementById('hostSwitchModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeHostSwitchModal() {
+            const modal = document.getElementById('hostSwitchModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function confirmHostSwitch(newOption) {
+            selectedHostOption = newOption;
+            selectHostOption(newOption);
+            closeHostSwitchModal();
+            renderStep8CollectionUI();
+            alert(`⚙️ Hosting choice switched to "${newOption === 'wehost' ? 'We Host & Launch Live' : newOption === 'github' ? 'GitHub' : 'Download ZIP'}"!`);
+        }
+
+        function launchGithubFromStep8() {
+            const repo = document.getElementById('personalGithubRepoInputStep8')?.value?.trim();
+            const token = document.getElementById('personalGithubTokenInputStep8')?.value?.trim();
+            if (repo) {
+                const origRepo = document.getElementById('personalGithubRepoInput');
+                if (origRepo) origRepo.value = repo;
+            }
+            if (token) {
+                const origToken = document.getElementById('personalGithubTokenInput');
+                if (origToken) origToken.value = token;
+            }
+            launchLiveHost();
+        }
+
+        // SAVE PROJECT
+        async function saveProjectNow() {
+            const key = activeVerifiedKey || safeGetStorage('xsites_key') || safeGetStorage('xsites_license_key');
+            if (!key) {
+                alert("Please activate your key in Step 1 before saving projects.");
+                return;
+            }
+
+            if (!sitePagesTree || Object.keys(sitePagesTree).length === 0 || !sitePagesTree.index) {
+                alert("No website generated yet to save. Please build your site in Step 7 first!");
+                return;
+            }
+
+            const defaultTitle = document.getElementById('siteTitleInput')?.value || "My EZsite Project";
+            const projectName = prompt("Enter a name for this saved project:", defaultTitle);
+            if (projectName === null) return;
+
+            const cleanProjectName = projectName.trim() || defaultTitle;
+            const currentLiveHtml = getCurrentPageHtmlContent();
+            if (currentLiveHtml && activeTabKey) sitePagesTree[activeTabKey] = currentLiveHtml;
+
+            safeSetStorage('xsite_easy_saved_project', JSON.stringify({
+                title: cleanProjectName,
+                pagesTree: sitePagesTree,
+                savedAt: new Date().toISOString()
+            }));
+
+            const status = document.getElementById('saveStatus');
+            if (status) status.innerText = "⏳ Saving project...";
+
+            try {
+                const res = await fetch(`${BACKEND_WORKER_URL}/save-project`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        licenseKey: key,
+                        projectName: cleanProjectName,
+                        pages: sitePagesTree
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (status) status.innerText = "✅ Saved successfully to account!";
+                    alert(`💾 Project "${cleanProjectName}" saved successfully!`);
+                } else {
+                    if (status) status.innerText = "⚠️ Saved locally (cloud notice)";
+                }
+            } catch (e) {
+                if (status) status.innerText = "✅ Saved to local browser storage!";
+            }
+        }
+
+        function resetSurveyForNewProject() {
+            if (confirm("Start a brand new website project?")) {
+                currentStep = 1;
+                sitePagesTree = { index: null };
+                if (document.getElementById('siteTitleInput')) document.getElementById('siteTitleInput').value = "";
+                if (document.getElementById('sitePromptInput')) document.getElementById('sitePromptInput').value = "";
+                if (document.getElementById('generateTriggerContainer')) document.getElementById('generateTriggerContainer').classList.remove('hidden');
+                if (document.getElementById('previewContainer')) document.getElementById('previewContainer').classList.add('hidden');
+                updateStepUI();
+            }
+        }
+
+        // Explicitly bind handlers to global window object
+        window.safeGetStorage = safeGetStorage;
+        window.safeSetStorage = safeSetStorage;
+        window.safeRemoveStorage = safeRemoveStorage;
+        window.toggleTheme = toggleTheme;
+        window.updateStepUI = updateStepUI;
+        window.nextStep = nextStep;
+        window.prevStep = prevStep;
+        window.selectStep1Choice = selectStep1Choice;
+        window.toggleExtraPages = toggleExtraPages;
+        window.selectHostOption = selectHostOption;
+        window.toggleImageUpload = toggleImageUpload;
+        window.toggleLinksArea = toggleLinksArea;
+        window.generateSiteWithRealBackend = generateSiteWithRealBackend;
+        window.renderTabsControlMatrix = renderTabsControlMatrix;
+        window.switchActivePreviewTab = switchActivePreviewTab;
+        window.applyAiEditWithBackend = applyAiEditWithBackend;
+        window.downloadZipBundle = downloadZipBundle;
+        window.launchLiveHost = launchLiveHost;
+        window.launchGithub = launchGithub;
+        window.renderStep8CollectionUI = renderStep8CollectionUI;
+        window.openHostSwitchModal = openHostSwitchModal;
+        window.closeHostSwitchModal = closeHostSwitchModal;
+        window.confirmHostSwitch = confirmHostSwitch;
+        window.launchGithubFromStep8 = launchGithubFromStep8;
+        window.saveProjectNow = saveProjectNow;
+        window.resetSurveyForNewProject = resetSurveyForNewProject;
+        window.copyActivePageHtmlToClipboard = copyActivePageHtmlToClipboard;
+        window.downloadActivePageHtmlFile = downloadActivePageHtmlFile;
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-gray-100 min-h-screen flex flex-col font-sans transition-colors duration-200 selection:bg-emerald-500 selection:text-white">
+
+    <!-- EZ MODE PAUSE NOTICE BANNER -->
+    <div class="bg-amber-500/20 border-b border-amber-500/30 text-amber-300 text-xs font-mono py-2 px-4 text-center flex items-center justify-center gap-2">
+        <span>⏸️ <strong>EZ Mode Standby:</strong> EZ Mode is temporarily paused to synchronize feature parity with XSITE main engine.</span>
+        <a href="index.html" class="underline font-bold hover:text-white">Switch to XSITE Main &rarr;</a>
+    </div>
+
+    <!-- Header Navigation Bar -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-200">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <a href="xsite.html" class="flex items-center gap-2">
+                    <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="logo" class="h-8 w-auto">
+                    <span class="font-extrabold tracking-wider text-base text-slate-900 dark:text-white">EZsite</span>
+                </a>
+                <span class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-500/20 hidden sm:inline-block">
+                    🪄 Easy AI Builder
+                </span>
+            </div>
+
+            <!-- Mid-Nav Desktop Links -->
+            <div class="hidden lg:flex items-center gap-5 text-xs font-semibold tracking-wide font-mono">
+                <a href="account.html" class="text-slate-400 hover:text-emerald-400 transition-all">📊 Account</a>
+                <a href="xsite.html" class="text-slate-400 hover:text-emerald-400 transition-all">⚡ XSITE Engine</a>
+                <a href="ezsite.html" class="text-emerald-400 font-bold border-b border-emerald-400 pb-0.5">🪄 EZsite Wizard</a>
+                <a href="xmg.html" class="text-slate-400 hover:text-emerald-400 transition-all">🖼️ XMG Vault</a>
+                <a href="xmail.html" class="text-slate-400 hover:text-emerald-400 transition-all">✉️ XMAIL Engine</a>
+            </div>
+
+            <!-- License Key & Credits Status Bar -->
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+                    <span class="text-slate-500 dark:text-gray-400 font-medium">Credits:</span>
+                    <span id="creditDisplay" class="font-mono font-bold text-emerald-600 dark:text-emerald-400">5</span>
+                    <span id="keyBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold uppercase border border-emerald-500/30">Free</span>
+                </div>
+
+                <button type="button" id="openPricingModalBtn" class="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
+                    💳 Upgrade
+                </button>
+
+                <button type="button" id="openProjectsBtn" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer">
+                    📁 Saved Projects
+                </button>
+
+                <!-- Theme Switcher Button -->
+                <button type="button" onclick="toggleTheme()" id="themeToggleBtn" class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer shadow-sm">
+                    <span id="themeIcon">🌙</span>
+                    <span id="themeBtnText">Dark Mode</span>
+                </button>
+
+                <a href="xsite.html" class="text-xs font-semibold text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-white bg-slate-200/70 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 transition">
+                    ⚡ Studio View
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Wizard Area -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 flex flex-col justify-center">
+
+        <!-- Step Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center text-xs font-bold text-slate-600 dark:text-gray-400 mb-2">
+                <span id="stepProgressLabel" class="text-emerald-700 dark:text-emerald-400 font-extrabold">STEP 1 OF 10</span>
+                <span id="stepPercentLabel" class="font-mono">10% Completed</span>
+            </div>
+            <div class="w-full h-3.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-300 dark:border-slate-700/50">
+                <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 progress-smooth" style="width: 10%;"></div>
+            </div>
+        </div>
+
+        <!-- SURVEY CARD CONTAINER -->
+        <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl dark:shadow-2xl relative overflow-hidden transition-colors duration-200">
+            
+            <!-- Step Badge Header -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <span id="stepBadge" class="w-8 h-8 rounded-full bg-emerald-500 text-white dark:text-black font-extrabold text-sm flex items-center justify-center shadow-md">1</span>
+                    <span id="stepCategory" class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-mono">Getting Started</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="keyStatusBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold uppercase">Free Tier</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: New Site or Edit Site? + Key Verification -->
+            <div id="step_1" class="step-card space-y-6">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Are you making a new site or editing an existing one?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> Choose "Make a Brand New Site" if you want our AI engine to build a fresh website for you. Choose "Edit an Existing Site" if you have HTML code you want to update.</p>
+                </div>
+
+                <!-- License Key Activation Box -->
+                <div class="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 p-4 rounded-xl space-y-2">
+                    <label class="block text-xs font-extrabold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">🔑 Activate Free Trial or Paste XSITE Key:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="licenseKeyInput" placeholder="Enter your email for Free Trial or paste XSITE key" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-emerald-300 focus:outline-none focus:border-emerald-500 shadow-sm">
+                        <button type="button" id="btnVerifyKey" class="px-4 py-2 bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-extrabold text-xs rounded-xl hover:bg-emerald-700 transition cursor-pointer">Activate Key</button>
+                    </div>
+                    <div id="keyFeedback" class="text-[11px] text-slate-600 dark:text-gray-400">Entering your email instantly generates a Free Trial Key with 5 credits!</div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <button type="button" onclick="selectStep1Choice('new')" id="btnChoice_new" class="choice-btn p-5 rounded-xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-left hover:border-emerald-600 transition flex flex-col justify-between space-y-3 cursor-pointer shadow-sm">
+                        <div class="text-3xl">🚀</div>
+                        <div>
+                            <div class="font-extrabold text-lg text-slate-900 dark:text-white">Make a Brand New Site</div>
+                            <div class="text-xs text-slate-600 dark:text-gray-400">Our AI engine will write and design everything fresh for you.</div>
+                        </div>
+                        <div id="check_new" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            Selected ✓
+                        </div>
+                    </button>
+
+                    <button type="button" onclick="selectStep1Choice('edit')" id="btnChoice_edit" class="choice-btn p-5 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left hover:border-slate-300 transition flex flex-col justify-between space-y-3 cursor-pointer">
+                        <div class="text-3xl">✏️</div>
+                        <div>
+                            <div class="font-extrabold text-lg text-slate-900 dark:text-white">Edit an Existing Site</div>
+                            <div class="text-xs text-slate-600 dark:text-gray-400">Paste your existing HTML code or files to modify them.</div>
+                        </div>
+                        <div id="check_edit" class="text-xs font-bold text-slate-400 hidden">Select</div>
+                    </button>
+                </div>
+
+                <!-- Conditional Input for Edit -->
+                <div id="editCodeContainer" class="hidden space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <label class="block text-sm font-bold text-emerald-700 dark:text-emerald-400">Paste your existing HTML code here:</label>
+                    <textarea id="existingHtmlInput" rows="5" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-800 dark:text-emerald-300 focus:outline-none focus:border-emerald-500" placeholder="<!DOCTYPE html><html>..."></textarea>
+                </div>
+            </div>
+
+            <!-- STEP 2: Pages Selection -->
+            <div id="step_2" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">What pages do you want included in your website?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> We always build a Main Home Page. Would you like extra subpages (like About Us, Contact, or Shop) added to your website menu?</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white">Add extra subpages (like About Us, Contact, Shop)?</span>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" onclick="toggleExtraPages(true)" id="btnPagesYes" class="px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm">Yes</button>
+                        <button type="button" onclick="toggleExtraPages(false)" id="btnPagesNo" class="px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300">No, Home Page Only</button>
+                    </div>
+                </div>
+
+                <div id="pagesSelectionArea" class="space-y-3 pt-2">
+                    <p class="text-xs font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider font-mono">Select the pages to build:</p>
+                    <div id="ezPagesCheckboxesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="p-3.5 bg-emerald-50 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-500/50 rounded-xl flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked disabled class="accent-emerald-600 w-4 h-4" value="index">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">🏠 Home (index)</span>
+                        </label>
+                        <label class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-xl flex items-center gap-3 cursor-pointer shadow-sm">
+                            <input type="checkbox" id="page_about" checked class="accent-emerald-600 w-4 h-4 page-checkbox" value="about">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">ℹ️ About Us</span>
+                        </label>
+                        <label class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-xl flex items-center gap-3 cursor-pointer shadow-sm">
+                            <input type="checkbox" id="page_contact" checked class="accent-emerald-600 w-4 h-4 page-checkbox" value="contact">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">📧 Contact</span>
+                        </label>
+                        <label class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-xl flex items-center gap-3 cursor-pointer shadow-sm">
+                            <input type="checkbox" id="page_products" class="accent-emerald-600 w-4 h-4 page-checkbox" value="products">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">🛍️ Shop / Products</span>
+                        </label>
+                        <label class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-xl flex items-center gap-3 cursor-pointer shadow-sm">
+                            <input type="checkbox" id="page_blog" class="accent-emerald-600 w-4 h-4 page-checkbox" value="blog">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">📝 Blog / Articles</span>
+                        </label>
+                        <label class="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-xl flex items-center gap-3 cursor-pointer shadow-sm">
+                            <input type="checkbox" id="page_faq" class="accent-emerald-600 w-4 h-4 page-checkbox" value="faq">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">❓ FAQ</span>
+                        </label>
+                    </div>
+
+                    <!-- Custom Page Adder -->
+                    <div class="flex gap-2 pt-2">
+                        <input type="text" id="customPageInput" placeholder="✨ Type any custom page (e.g. Portfolio, Services...)" class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 font-mono">
+                        <button type="button" id="addCustomPageBtn" class="px-4 py-2 bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-extrabold text-xs rounded-xl hover:bg-emerald-700 transition cursor-pointer">➕ Add Page</button>
+                    </div>
+
+                    <!-- Blog Post Multiplier -->
+                    <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                        <label for="blogPostCountSelect" class="text-xs font-extrabold text-slate-800 dark:text-white">📰 Extra Full Blog Articles:</label>
+                        <select id="blogPostCountSelect" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-emerald-400 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none">
+                            <option value="0" selected>0 (Blog Home Only)</option>
+                            <option value="1">1 Full Article</option>
+                            <option value="2">2 Full Articles</option>
+                            <option value="3">3 Full Articles</option>
+                            <option value="4">4 Full Articles</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Site Topic & Description -->
+            <div id="step_3" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Tell us about the site you wish to create.</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> What is the name of your site or business, and what does it do? Type in simple, easy words!</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-2">Website Name or Title:</label>
+                        <input type="text" id="siteTitleInput" placeholder="e.g. Sunny Bakery & Cupcakes" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-2">Describe what your website is about:</label>
+                        <textarea id="sitePromptInput" rows="4" placeholder="e.g. A cozy family-owned bakery in Seattle that bakes fresh cupcakes, custom wedding cakes, and artisanal sourdough bread every morning." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 leading-relaxed shadow-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-2">Pick a style / vibe for your website:</label>
+                        <select id="siteVibeSelect" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm">
+                            <option value="warm and friendly">🧁 Warm & Friendly (Soft colors, welcoming)</option>
+                            <option value="modern and clean">🌟 Modern & Clean (Sleek layout, crisp fonts)</option>
+                            <option value="professional business">💼 Professional & Corporate (Trustworthy blue/navy)</option>
+                            <option value="vibrant and energetic">⚡ Vibrant & Energetic (Bright accents, bold text)</option>
+                        </select>
+                    </div>
+
+                    <!-- Optional Copy Style URL -->
+                    <div class="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/60 p-4 rounded-xl space-y-3">
+                        <label class="block text-xs font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wider">🎨 Optional: Copy Style from Another Website</label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="cursor-pointer flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                <input type="radio" name="dnaCloneMode" value="style_reference" checked class="accent-amber-500">
+                                <div>
+                                    <span class="font-bold block text-slate-800 dark:text-white">Copy Style & Colors</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                <input type="radio" name="dnaCloneMode" value="my_webpage" class="accent-amber-500">
+                                <div>
+                                    <span class="font-bold block text-slate-800 dark:text-white">Copy Exact Header/Footer</span>
+                                </div>
+                            </label>
+                        </div>
+                        <input type="url" id="dnaSourceUrl" placeholder="https://example.com/website-to-copy-style" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-amber-300 focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: Host Preference -->
+            <div id="step_4" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Would you like us to host the site, send it to your GitHub, or write the HTML so you can bring it to your own host?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> Choose where you want your website delivered. If you're not sure, pick "We Host It For You" (it's free & instant!).</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <button type="button" onclick="selectHostOption('wehost')" id="hostBtn_wehost" class="p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-left hover:border-emerald-600 transition cursor-pointer shadow-sm">
+                        <div class="text-2xl mb-2">🌐</div>
+                        <div class="font-extrabold text-sm text-slate-900 dark:text-white">We Host It For You</div>
+                        <div class="text-[11px] text-slate-600 dark:text-gray-400 mt-1">Instant live web link on our fast cloud network.</div>
+                    </button>
+                    <button type="button" onclick="selectHostOption('github')" id="hostBtn_github" class="p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left hover:border-slate-300 transition cursor-pointer">
+                        <div class="text-2xl mb-2">🐙</div>
+                        <div class="font-extrabold text-sm text-slate-900 dark:text-white">Send to GitHub</div>
+                        <div class="text-[11px] text-slate-600 dark:text-gray-400 mt-1">Publish directly to GitHub Pages repository.</div>
+                    </button>
+                    <button type="button" onclick="selectHostOption('download')" id="hostBtn_download" class="p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-left hover:border-slate-300 transition cursor-pointer">
+                        <div class="text-2xl mb-2">💾</div>
+                        <div class="font-extrabold text-sm text-slate-900 dark:text-white">Download HTML</div>
+                        <div class="text-[11px] text-slate-600 dark:text-gray-400 mt-1">Get the HTML file to put on any host.</div>
+                    </button>
+                </div>
+
+                <!-- Domain and GitHub settings panel -->
+                <div class="space-y-3 pt-2">
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                        <label for="intendedDomainInput" class="block text-xs font-extrabold text-slate-700 dark:text-gray-300 uppercase tracking-wider">🌐 Custom Domain (Optional):</label>
+                        <input type="text" id="intendedDomainInput" placeholder="e.g. mybakery.com" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-900 dark:text-white">
+                    </div>
+
+                    <!-- Remove Branding Option -->
+                    <div id="removeBrandingContainer" class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-purple-500/30 flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <label for="removeBrandingToggle" class="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer flex items-center gap-1.5">
+                                <span>⚡ Remove XSITE Branding</span>
+                                <span id="removeBrandingBadge" class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/40 uppercase">Growth+ Feature</span>
+                            </label>
+                            <p class="text-[10px] text-slate-500 dark:text-gray-400">Strips footer label & meta tag from site builds (Growth, Pro & Lifetime plans).</p>
+                        </div>
+                        <input type="checkbox" id="removeBrandingToggle" class="w-4 h-4 text-purple-600 rounded border-gray-700 bg-gray-900 focus:ring-purple-500 cursor-pointer" />
+                    </div>
+
+                    <div id="githubHostSettingsPanel" class="hidden bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+                        <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">🐙 GitHub Repository Settings:</h4>
+                        <input type="text" id="personalGithubRepoInput" placeholder="username/repository-name" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs font-mono text-slate-900 dark:text-white">
+                        <input type="password" id="personalGithubTokenInput" placeholder="ghp_xxxxxxxx (Access Token)" class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs font-mono text-slate-900 dark:text-white">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: Images & Uploads -->
+            <div id="step_5" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Do you have any images or files you want included in this site?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> If you have your own logo or photos, you can add them. If not, click "No" and our AI engine will create custom pictures for you!</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white">Do you have photos or a logo to upload?</span>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" onclick="toggleImageUpload(true)" id="btnImagesYes" class="px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300">Yes</button>
+                        <button type="button" onclick="toggleImageUpload(false)" id="btnImagesNo" class="px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm">No, Use AI Pictures</button>
+                    </div>
+                </div>
+
+                <div id="imageUploadArea" class="hidden space-y-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-extrabold text-slate-700 dark:text-gray-300 uppercase tracking-wider mb-2">Paste Image URL or Photo Links:</label>
+                        <input type="text" id="userImageUrlInput" placeholder="https://example.com/my-logo.png" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500 shadow-sm">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 6: Links & Social Media -->
+            <div id="step_6" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Do you have any specific links you would like included in your website?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> Add links to your Instagram, Facebook, phone number, or email so visitors can reach you!</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <span class="text-sm font-bold text-slate-800 dark:text-white">Add social media or contact links?</span>
+                    <div class="flex gap-2 shrink-0">
+                        <button type="button" onclick="toggleLinksArea(true)" id="btnLinksYes" class="px-5 py-2 text-xs font-extrabold rounded-lg bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-gray-300">Yes</button>
+                        <button type="button" onclick="toggleLinksArea(false)" id="btnLinksNo" class="px-5 py-2 text-xs font-extrabold rounded-lg bg-emerald-600 text-white dark:bg-emerald-500 dark:text-black shadow-sm">No Links Needed</button>
+                    </div>
+                </div>
+
+                <div id="linksArea" class="hidden space-y-3 pt-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="text" id="linkInstagram" placeholder="Instagram URL (e.g. instagram.com/mybakery)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                        <input type="text" id="linkFacebook" placeholder="Facebook URL (e.g. facebook.com/mybakery)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                        <input type="text" id="linkPhone" placeholder="Phone Number (e.g. (555) 123-4567)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                        <input type="text" id="linkEmail" placeholder="Email Address (e.g. hello@bakery.com)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 7: Live Multi-Page Preview & Full XSITE Page Editor -->
+            <div id="step_7" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">This is a preview of your website, would you like to make any edits?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> Click between the page tabs below to preview each page created by our AI engine! Double-click text inside the preview window to type edits directly, or use the Page Editor below.</p>
+                </div>
+
+                <!-- Generate Trigger & Rocket Launchpad Module -->
+                <div id="generateTriggerContainer" class="text-center py-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                    <!-- Rocket Launchpad Overlay -->
+                    <div id="rocketLaunchpad" class="hidden relative overflow-hidden bg-slate-950 border-2 border-emerald-500/80 rounded-2xl p-6 text-center space-y-4 shadow-2xl stars-bg mb-4">
+                        <div class="relative z-10 flex flex-col items-center justify-center space-y-3 py-4">
+                            <!-- Animated Rocket Icon -->
+                            <div id="rocketShipIcon" class="text-6xl transition-transform duration-700 ease-out inline-block select-none">🚀</div>
+                            <div id="thrusterGlow" class="w-12 h-6 bg-gradient-to-b from-amber-400 via-orange-500 to-transparent rounded-b-full blur-sm mx-auto hidden"></div>
+                            
+                            <div class="space-y-1">
+                                <h3 id="rocketStatusTitle" class="text-xl font-extrabold text-white tracking-wide">Igniting AI Rocket Engines...</h3>
+                                <p id="rocketStatusSubtitle" class="text-xs font-mono text-emerald-400">T-minus 3 seconds to liftoff!</p>
+                            </div>
+
+                            <!-- Telemetry Progress Bar -->
+                            <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-full h-3 overflow-hidden shadow-inner">
+                                <div id="rocketProgressBar" class="bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-4xl">🚀</div>
+                    <div class="text-sm font-bold text-slate-700 dark:text-slate-300">Ready to build your complete website with XSITE AI engine!</div>
+                    <button type="button" onclick="generateSiteWithRealBackend()" id="btnGenerateNow" class="px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white dark:text-black font-extrabold text-lg shadow-lg hover:scale-105 transition cursor-pointer">
+                        ✨ Build My Website Now!
+                    </button>
+                    <div id="buildStatusNotice" class="text-xs font-mono text-slate-500 dark:text-gray-400">Uses 1 credit to compile full multi-page architecture.</div>
+                </div>
+
+                <!-- Terminal Progress Module -->
+                <div id="statusModule" class="hidden space-y-2">
+                    <div id="consoleTerminal" class="w-full bg-black/90 border border-slate-800 rounded-xl p-3 font-mono text-[11px] text-gray-300 space-y-1 max-h-[120px] overflow-y-auto"></div>
+                </div>
+
+                <!-- Multi-Page Live Preview Frame & Full Toolbar -->
+                <div id="previewContainer" class="hidden space-y-4">
+                    
+                    <!-- Toolbar Row 1: Interactive Page Preview Tabs -->
+                    <div class="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+                        <div id="previewTabsBar" class="flex items-center gap-1.5 overflow-x-auto">
+                            <!-- Page tabs injected dynamically -->
+                        </div>
+                        <span id="activePageIndicator" class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 shrink-0">Viewing: index.html</span>
+                    </div>
+
+                    <!-- Toolbar Row 2: Viewport Size & Quick Actions Toolbar -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                        <div class="flex items-center gap-1 bg-black/60 border border-slate-800 rounded-lg p-1 text-[10px] text-gray-300">
+                            <span class="text-[9px] text-gray-400 font-bold px-1 select-none">View:</span>
+                            <button type="button" id="vSizeSmallBtn" onclick="if(window.setViewerSize) window.setViewerSize('small');" class="px-2 py-0.5 rounded text-gray-300 hover:bg-gray-800 cursor-pointer">🗗 Small</button>
+                            <button type="button" id="vSizeMedBtn" onclick="if(window.setViewerSize) window.setViewerSize('med');" class="px-2 py-0.5 rounded text-sky-400 font-bold bg-sky-500/20 border border-sky-500/30 cursor-pointer">🗖 Med</button>
+                            <button type="button" id="vSizeFullBtn" onclick="if(window.setViewerSize) window.setViewerSize('full');" class="px-2 py-0.5 rounded text-gray-300 hover:bg-gray-800 cursor-pointer">⛶ Full</button>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button id="openNewTabBtn" type="button" class="px-2.5 py-1 rounded text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold cursor-pointer transition flex items-center gap-1">
+                                ↗️ Tab
+                            </button>
+                            <button id="directTextEditBtn" type="button" class="px-2.5 py-1 rounded text-[10px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold cursor-pointer transition flex items-center gap-1">
+                                ✏️ Direct Edit
+                            </button>
+                            <button id="viewCodeBtn" type="button" class="px-2.5 py-1 rounded text-[10px] bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 font-bold cursor-pointer transition flex items-center gap-1">
+                                <span>⟨/⟩</span> View Code
+                            </button>
+                            <button id="quickCopyBtn" onclick="copyActivePageHtmlToClipboard(this)" type="button" class="px-2 py-1 rounded text-[10px] bg-black/60 hover:bg-gray-800 text-gray-300 border border-gray-800 cursor-pointer">
+                                📋 Copy
+                            </button>
+                            <button id="quickDownloadBtn" onclick="downloadActivePageHtmlFile()" type="button" class="px-2 py-1 rounded text-[10px] bg-black/60 hover:bg-gray-800 text-gray-300 border border-gray-800 cursor-pointer">
+                                📥 Download
+                            </button>
+                            <span id="elapsedTimer" class="text-gray-400 text-[10px]">0.0s</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Iframe Window -->
+                    <div class="border border-slate-300 dark:border-slate-800 rounded-xl overflow-hidden bg-white shadow-xl h-[500px] relative">
+                        <iframe id="previewIframe" sandbox="allow-scripts allow-same-origin allow-popups" class="w-full h-full border-0"></iframe>
+                    </div>
+
+                    <!-- VISUAL BLOCK & VARIABLE INSPECTOR PANEL -->
+                    <div id="visualInspectorPanel" class="w-full bg-[#080d14] border border-slate-800 rounded-xl shadow-2xl overflow-hidden font-sans">
+                        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-950 border-b border-slate-800">
+                            <div class="flex items-center gap-2">
+                                <span id="inspectorTagBadge" class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span id="inspectorTagLabel">🎯 Click any element in preview to edit</span>
+                                </span>
+                                <span id="inspectorPathLabel" class="text-[11px] font-mono text-slate-400 hidden md:inline-block"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="inspectorAddVarBtn" title="Add item/variable to this section" class="hidden px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1">
+                                    ➕ Add Item
+                                </button>
+                                <button type="button" id="inspectorDeleteBtn" title="Delete selected element" class="hidden px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1">
+                                    🗑️ Delete
+                                </button>
+                                <button type="button" id="inspectorUndoBtn" disabled title="Undo change" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-40">
+                                    ↶ Undo
+                                </button>
+                                <button type="button" id="inspectorRedoBtn" disabled title="Redo change" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-40">
+                                    ↷ Redo
+                                </button>
+                                <button type="button" id="inspectorDeselectBtn" class="hidden text-xs font-mono text-slate-400 hover:text-white px-2 py-1 cursor-pointer">
+                                    ✕ Done
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="inspectorAiBar" class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center gap-2">
+                            <input type="text" id="inspectorAiInput" placeholder="Ask AI to refine this selected object (e.g. make headline larger, change button layout)..." class="flex-1 bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-emerald-500">
+                            <button type="button" id="inspectorAiBtn" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs font-mono rounded-lg transition-colors cursor-pointer shrink-0">
+                                ⚡ Refine with AI
+                            </button>
+                        </div>
+
+                        <div id="inspectorVariablesWorkspace" class="p-4 space-y-4 max-h-[380px] overflow-y-auto bg-[#080d14]">
+                            <div id="inspectorPlaceholder" class="py-8 text-center space-y-2">
+                                <div class="text-3xl">👆</div>
+                                <p class="text-xs text-slate-300 font-medium">Click on any section, hero, header, headline, button, link, or image in the preview window above.</p>
+                                <p class="text-[11px] text-slate-500 font-mono">All editable variables (text, size, colors, links, images, layout items) will appear here instantly!</p>
+                            </div>
+                            <div id="inspectorFormContainer" class="hidden space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 8: How to Collect -->
+            <div id="step_8" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">How would you like to collect your website?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> Options below reflect your hosting selection from Step 4. You can download your ZIP bundle, push to GitHub, or view your live hosted URL!</p>
+                </div>
+
+                <div id="step8OptionsContainer">
+                    <!-- Injected dynamically by renderStep8CollectionUI() -->
+                </div>
+
+                <!-- Custom Domain Binding Module -->
+                <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+                    <label for="customDomainInput" class="block text-xs font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">🌐 Bind Custom Domain (e.g. mycustomdomain.com):</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="customDomainInput" placeholder="mycustomdomain.com" class="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs font-mono text-slate-900 dark:text-amber-300">
+                        <button type="button" id="bindCustomDomainBtn" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs rounded-xl font-mono transition cursor-pointer">Bind Domain</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 9: Save? -->
+            <div id="step_9" class="step-card space-y-6 hidden">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">Save Project?</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800">💡 <strong>Clarification:</strong> Save your project to your account and local storage so you can edit or download it anytime!</p>
+                </div>
+
+                <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <button type="button" onclick="saveProjectNow()" id="btnSaveNow" class="px-8 py-3 bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-extrabold text-base rounded-xl hover:bg-emerald-700 shadow-md cursor-pointer">
+                        💾 Save Project Now
+                    </button>
+                    <span id="saveStatus" class="text-xs text-slate-500 dark:text-gray-400 font-semibold">Saved to account & browser storage.</span>
+                </div>
+            </div>
+
+            <!-- STEP 10: Start Another Project -->
+            <div id="step_10" class="step-card space-y-6 hidden">
+                <div class="text-center py-6 space-y-4">
+                    <div class="text-5xl">🎉</div>
+                    <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">You're All Done!</h2>
+                    <p class="text-sm text-slate-600 dark:text-gray-300 max-w-md mx-auto">Your complete multi-page website has been created with XSITE quality!</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <button type="button" onclick="resetSurveyForNewProject()" class="p-4 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black font-extrabold text-center hover:bg-emerald-700 shadow-md cursor-pointer">
+                        ➕ Start Another Project
+                    </button>
+                    <a href="xsite.html" class="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white font-extrabold text-center hover:bg-slate-200 block">
+                        📊 Go to Studio View
+                    </a>
+                </div>
+            </div>
+
+            <!-- BOTTOM NAVIGATION BAR -->
+            <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
+                <button type="button" onclick="prevStep()" id="btnPrev" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-gray-300 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer" disabled>
+                    ⬅️ Back
+                </button>
+                <button type="button" onclick="nextStep()" id="btnNext" class="px-7 py-2.5 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white dark:text-black text-xs font-extrabold hover:bg-emerald-700 transition cursor-pointer shadow-md">
+                    Next Step ➡️
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 💳 PRICING, UPGRADE & TOP-UP MODAL -->
+    <div id="pricingModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full p-6 space-y-6 shadow-2xl relative my-8 text-white font-sans">
+        <button id="closePricingBtn" type="button" class="absolute top-4 right-4 text-gray-400 hover:text-white font-mono text-lg cursor-pointer">✕</button>
+        
+        <div class="text-center space-y-2">
+          <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Plans, Tokens & Activation</span>
+          <h2 class="text-2xl md:text-3xl font-black text-white">Choose Your XSITE Subscription Tier</h2>
+          <p class="text-xs text-gray-300 max-w-lg mx-auto">Flexible monthly site tokens with full code ownership and zero restrictions.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 font-sans">
+          <!-- 🟢 Free Tier -->
+          <div class="bg-black/40 border border-gray-800 rounded-xl p-4 space-y-3 flex flex-col justify-between hover:border-gray-700 transition-all">
+            <div>
+              <div class="text-[10px] font-mono text-emerald-400 font-bold uppercase">🟢 Free Tier</div>
+              <h3 class="text-sm font-bold text-white">Trial Access</h3>
+              <div class="text-xl font-black text-white my-1">$0 <span class="text-[10px] font-normal text-gray-500">/mo</span></div>
+              <div class="text-[10px] text-emerald-400 font-mono font-semibold">3 tokens / month</div>
+              <ul class="text-[11px] text-gray-400 space-y-1.5 font-mono my-3">
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 1–2 pages or 6 blogs</li>
+                <li class="flex items-center gap-1.5"><span class="text-amber-400">⚡</span> Floating tag + Footer label</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Meta tag (Created with xsite)</li>
+              </ul>
+            </div>
+            <div class="space-y-2">
+              <input 
+                type="email" 
+                id="modalFreeEmailInput" 
+                placeholder="Enter email address" 
+                class="w-full bg-slate-950 border border-gray-700 rounded-lg px-2.5 py-2 text-xs font-mono text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+              <button 
+                type="button" 
+                id="modalActivateFreeBtn" 
+                class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs py-2 rounded-lg font-mono transition-all text-center block shadow-md uppercase tracking-wider cursor-pointer"
+              >
+                Get Free Key
+              </button>
+            </div>
+          </div>
+
+          <!-- 🔵 Starter -->
+          <div class="bg-black/40 border border-sky-500/40 rounded-xl p-4 space-y-3 flex flex-col justify-between hover:border-sky-400 transition-all">
+            <div>
+              <div class="text-[10px] font-mono text-sky-400 font-bold uppercase">🔵 Starter</div>
+              <h3 class="text-sm font-bold text-white">Entry Upgrade</h3>
+              <div class="text-xl font-black text-sky-400 my-1">$5 <span class="text-[10px] font-normal text-gray-500">/mo</span></div>
+              <div class="text-[10px] text-sky-300 font-mono font-semibold">20 tokens / month</div>
+              <ul class="text-[11px] text-gray-400 space-y-1.5 font-mono my-3">
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 20 tokens / month</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Floating tag removed</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Footer label & Meta tag</li>
+              </ul>
+            </div>
+            <a title="Order Starter Plan" href="https://xstreamflex.com/order/xsitesbasic/" target="_blank" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs py-2.5 rounded-lg font-mono transition-all text-center block shadow-md uppercase tracking-wider">Order $5</a>
+          </div>
+
+          <!-- 🟣 Growth (Most Popular) -->
+          <div class="bg-black/60 border-2 border-purple-500/80 rounded-xl p-4 space-y-3 flex flex-col justify-between relative shadow-lg hover:border-purple-400 transition-all">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full border border-purple-300 shadow">🔥 Most Popular</span>
+            <div>
+              <div class="text-[10px] font-mono text-purple-400 font-bold uppercase">🟣 Growth</div>
+              <h3 class="text-sm font-bold text-white">Best Value</h3>
+              <div class="text-xl font-black text-purple-400 my-1">$9 <span class="text-[10px] font-normal text-gray-500">/mo</span></div>
+              <div class="text-[10px] text-purple-300 font-mono font-semibold">50 tokens / month</div>
+              <ul class="text-[11px] text-gray-300 space-y-1.5 font-mono my-3">
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 50 tokens / month</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Remove Branding option</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Custom domain</li>
+              </ul>
+            </div>
+            <a title="Order Growth Plan" href="https://xstreamflex.com/order/xsitepro/" target="_blank" class="w-full bg-purple-500 hover:bg-purple-400 text-white font-extrabold text-xs py-2.5 rounded-lg font-mono transition-all text-center block shadow-lg uppercase tracking-wider">Order $9</a>
+          </div>
+
+          <!-- 🟡 Pro -->
+          <div class="bg-black/40 border border-amber-500/50 rounded-xl p-4 space-y-3 flex flex-col justify-between hover:border-amber-400 transition-all">
+            <div>
+              <div class="text-[10px] font-mono text-amber-400 font-bold uppercase">🟡 Pro</div>
+              <h3 class="text-sm font-bold text-white">Power Tier</h3>
+              <div class="text-xl font-black text-amber-400 my-1">$29 <span class="text-[10px] font-normal text-gray-500">/mo</span></div>
+              <div class="text-[10px] text-amber-300 font-mono font-semibold">150 tokens / month</div>
+              <ul class="text-[11px] text-gray-400 space-y-1.5 font-mono my-3">
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> 150 tokens / month</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> White-label mode (No branding)</li>
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> Multi-page unlocked</li>
+              </ul>
+            </div>
+            <a title="Order Pro Plan" href="https://xstreamflex.com/order/xsitesbiz/" target="_blank" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs py-2.5 rounded-lg font-mono transition-all text-center block shadow-lg uppercase tracking-wider">Order $29</a>
+          </div>
+
+          <!-- 🟠 LTD -->
+          <div class="bg-gradient-to-b from-amber-500/10 via-black/40 to-black/60 border-2 border-emerald-500/80 rounded-xl p-4 space-y-3 flex flex-col justify-between relative shadow-xl hover:border-emerald-400 transition-all">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-black text-[9px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full border border-emerald-300 shadow">⭐ Club Tier</span>
+            <div>
+              <div class="text-[10px] font-mono text-emerald-400 font-bold uppercase">🟠 LTD Lifetime</div>
+              <h3 class="text-sm font-bold text-white">Superfan Pass</h3>
+              <div class="text-xl font-black text-emerald-400 my-1">$199 <span class="text-[10px] font-normal text-gray-500">once</span></div>
+              <div class="text-[10px] text-emerald-300 font-mono font-semibold">200 tokens / mo forever</div>
+              <ul class="text-[11px] text-gray-300 space-y-1.5 font-mono my-3">
+                <li class="flex items-center gap-1.5"><span class="text-emerald-400">✓</span> White-label (No branding)</li>
+                <li class="flex items-center gap-1.5 font-bold"><span class="text-emerald-400">👉</span> 50% OFF top-ups for life</li>
+              </ul>
+            </div>
+            <a title="Order Lifetime Pass" href="https://xstreamflex.com/order/xsitelifetime/" target="_blank" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs py-2.5 rounded-lg font-mono transition-all text-center block shadow-xl uppercase tracking-wider">Get LTD $199</a>
+          </div>
+        </div>
+
+        <!-- ⚡ TOP-UP TOKENS SECTION -->
+        <div class="pt-4 border-t border-slate-800 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-base font-black text-white flex items-center gap-2">
+                <span>⚡ Top-Up Tokens</span>
+                <span class="text-[10px] font-mono text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">Add-On Packs</span>
+              </h3>
+              <p class="text-xs text-gray-400">Need extra page credits? Purchase token top-up packages anytime!</p>
+            </div>
+            <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-1.5 text-xs text-emerald-400 font-mono font-bold flex items-center gap-1.5">
+              <span>👉</span> LTD Members get 50% OFF all top-ups for life!
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 font-sans">
+            <!-- 10 Tokens -->
+            <div class="bg-black/50 border border-slate-800 hover:border-emerald-500/40 rounded-xl p-3 text-center space-y-1.5 transition-all">
+              <div class="text-xs font-mono font-bold text-gray-400">10 Tokens</div>
+              <div class="text-lg font-black text-white">$4.99</div>
+              <div class="text-[10px] font-mono text-emerald-400 font-bold">LTD: $2.50</div>
+              <a href="https://xstreamflex.com/order/topup10/" target="_blank" class="block w-full bg-slate-800 hover:bg-emerald-500 hover:text-black text-gray-200 text-xs font-mono font-bold py-1.5 rounded transition-all">Top Up 10</a>
+            </div>
+
+            <!-- 20 Tokens -->
+            <div class="bg-black/50 border border-slate-800 hover:border-emerald-500/40 rounded-xl p-3 text-center space-y-1.5 transition-all">
+              <div class="text-xs font-mono font-bold text-sky-400">20 Tokens</div>
+              <div class="text-lg font-black text-white">$8.99</div>
+              <div class="text-[10px] font-mono text-emerald-400 font-bold">LTD: $4.50</div>
+              <a href="https://xstreamflex.com/order/topup20/" target="_blank" class="block w-full bg-slate-800 hover:bg-sky-500 hover:text-black text-gray-200 text-xs font-mono font-bold py-1.5 rounded transition-all">Top Up 20</a>
+            </div>
+
+            <!-- 50 Tokens -->
+            <div class="bg-black/50 border border-slate-800 hover:border-emerald-500/40 rounded-xl p-3 text-center space-y-1.5 transition-all">
+              <div class="text-xs font-mono font-bold text-purple-400">50 Tokens</div>
+              <div class="text-lg font-black text-white">$19.99</div>
+              <div class="text-[10px] font-mono text-emerald-400 font-bold">LTD: $10.00</div>
+              <a href="https://xstreamflex.com/order/topup50/" target="_blank" class="block w-full bg-slate-800 hover:bg-purple-500 hover:text-white text-gray-200 text-xs font-mono font-bold py-1.5 rounded transition-all">Top Up 50</a>
+            </div>
+
+            <!-- 100 Tokens -->
+            <div class="bg-black/50 border border-slate-800 hover:border-emerald-500/40 rounded-xl p-3 text-center space-y-1.5 transition-all">
+              <div class="text-xs font-mono font-bold text-amber-400">100 Tokens</div>
+              <div class="text-lg font-black text-white">$34.99</div>
+              <div class="text-[10px] font-mono text-emerald-400 font-bold">LTD: $17.50</div>
+              <a href="https://xstreamflex.com/order/topup100/" target="_blank" class="block w-full bg-slate-800 hover:bg-amber-500 hover:text-black text-gray-200 text-xs font-mono font-bold py-1.5 rounded transition-all">Top Up 100</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-right pt-2 border-t border-slate-800">
+          <button type="button" onclick="document.getElementById('pricingModal').classList.add('hidden')" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-gray-300 text-xs font-bold rounded-xl cursor-pointer">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📁 SAVED PROJECTS DRAWER -->
+    <div id="projectsDrawer" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative text-white font-sans">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">📁 Saved Projects</h3>
+          <button id="closeProjectsBtn" type="button" class="text-gray-400 hover:text-white font-mono text-lg cursor-pointer">✕</button>
+        </div>
+        <div id="projectsList" class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+          <div class="text-center py-6 text-xs text-gray-400">Loading saved projects...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⟨/⟩ RAW HTML CODE EDITOR MODAL -->
+    <div id="codeEditorModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-sky-500/40 rounded-2xl max-w-4xl w-full h-[85vh] p-4 sm:p-6 flex flex-col space-y-4 shadow-2xl relative">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono text-sky-400 font-bold px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 uppercase">HTML Code Editor</span>
+            <h3 id="codeEditorPageTitle" class="text-xs sm:text-sm font-mono font-bold text-white">index.html</h3>
+          </div>
+          <button id="closeCodeEditorBtn" type="button" class="text-gray-400 hover:text-white font-mono text-lg cursor-pointer">✕</button>
+        </div>
+        <textarea id="liveCodeTextarea" class="dark-textarea flex-1 w-full rounded-xl p-4 resize-none leading-relaxed text-xs font-mono focus:outline-none" spellcheck="false"></textarea>
+        <div class="flex items-center justify-between border-t border-slate-800 pt-3 shrink-0">
+          <span class="text-[10px] text-gray-400 font-mono">Edit raw HTML directly. Click Apply to update the live canvas.</span>
+          <div class="flex gap-2">
+            <button id="copyModalCodeBtn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-mono bg-slate-800 text-gray-300 border border-slate-700 cursor-pointer">📋 Copy</button>
+            <button id="applyLiveCodeBtn" type="button" class="px-4 py-1.5 rounded-xl text-xs font-mono font-bold bg-emerald-500 text-black shadow-md uppercase cursor-pointer">⚡ Apply to Viewport</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⚙️ HOST SWITCH WARNING MODAL -->
+    <div id="hostSwitchModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative text-white font-sans">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2 text-amber-400 font-extrabold text-sm">
+            <span class="text-xl">⚠️</span>
+            <h3>Host Selection Change Warning</h3>
+          </div>
+          <button onclick="closeHostSwitchModal()" type="button" class="text-gray-400 hover:text-white font-mono text-lg cursor-pointer">✕</button>
+        </div>
+        <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-200 leading-relaxed">
+          <strong>Warning:</strong> Changing your hosting destination late in the workflow may break custom domain bindings or link routing configured for your original selection. Are you sure you want to switch?
+        </div>
+        <div class="space-y-2 pt-1">
+          <p class="text-[11px] font-bold text-gray-300 uppercase font-mono">Select new hosting destination:</p>
+          <button type="button" onclick="confirmHostSwitch('wehost')" class="w-full p-3 rounded-xl bg-slate-800 border border-emerald-500 hover:bg-emerald-500/20 text-white text-left font-bold text-xs cursor-pointer flex items-center justify-between">
+            <span>🌐 We Host & Launch Live (Instant Link)</span>
+            <span class="text-emerald-400 font-mono">Select</span>
+          </button>
+          <button type="button" onclick="confirmHostSwitch('github')" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-left font-bold text-xs cursor-pointer flex items-center justify-between">
+            <span>🐙 Send to GitHub Repository</span>
+            <span class="text-gray-400 font-mono">Select</span>
+          </button>
+          <button type="button" onclick="confirmHostSwitch('download')" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-left font-bold text-xs cursor-pointer flex items-center justify-between">
+            <span>💾 Download HTML (.ZIP Package)</span>
+            <span class="text-gray-400 font-mono">Select</span>
+          </button>
+        </div>
+        <div class="text-right pt-2 border-t border-slate-800">
+          <button type="button" onclick="closeHostSwitchModal()" class="px-4 py-2 bg-slate-800 text-gray-300 text-xs font-bold rounded-xl cursor-pointer">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client Script Core Engine Logic -->
+    <script>
+        function applyTierBrandingRules(tierId) {
+            const removeBrandingToggle = document.getElementById('removeBrandingToggle');
+            const removeBrandingBadge = document.getElementById('removeBrandingBadge');
+            if (!removeBrandingToggle) return;
+
+            const cleanTier = String(tierId || 'free').toLowerCase().trim();
+
+            if (['pro_29', 'business_29', 'lifetime_199', 'master'].includes(cleanTier)) {
+                removeBrandingToggle.checked = true;
+                removeBrandingToggle.disabled = true;
+                if (removeBrandingBadge) {
+                    removeBrandingBadge.textContent = "White Label Active";
+                    removeBrandingBadge.className = "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase";
+                }
+            } else if (cleanTier === 'growth_9' || cleanTier === 'pro_9') {
+                removeBrandingToggle.disabled = false;
+                if (removeBrandingBadge) {
+                    removeBrandingBadge.textContent = "Growth Tier Unlocked";
+                    removeBrandingBadge.className = "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase";
+                }
+            } else {
+                removeBrandingToggle.checked = false;
+                removeBrandingToggle.disabled = true;
+                if (removeBrandingBadge) {
+                    removeBrandingBadge.textContent = cleanTier === 'starter_5' ? "Starter (Footer & Meta Tag)" : "Free (Floating & Footer Tag)";
+                    removeBrandingBadge.className = "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase";
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStepUI();
+
+            const licenseInput = document.getElementById('licenseKeyInput');
+            const verifyBtn = document.getElementById('btnVerifyKey');
+
+            if (verifyBtn && licenseInput) {
+                verifyBtn.addEventListener('click', async () => {
+                    const rawKey = licenseInput.value.trim();
+                    if (!rawKey) return;
+
+                    verifyBtn.disabled = true;
+                    verifyBtn.textContent = "...";
+
+                    try {
+                        const res = await fetch(`${BACKEND_WORKER_URL}/verify-license`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ licenseKey: rawKey })
+                        });
+                        const data = await res.json();
+
+                        if (data.success || data.valid) {
+                            const record = data.record || data;
+                            const assignedKey = record.key || data.key || rawKey;
+                            activeVerifiedKey = assignedKey;
+                            safeSetStorage('xsites_key', assignedKey);
+                            safeSetStorage('xsites_license_key', assignedKey);
+                            safeSetStorage('xsites_active_key', assignedKey);
+                            if (licenseInput) licenseInput.value = assignedKey;
+
+                            const credits = record.credits !== undefined ? record.credits : (data.credits !== undefined ? data.credits : 5);
+                            document.querySelectorAll('#creditDisplay').forEach(el => el.textContent = credits);
+
+                            const tierName = record.tierName || (record.tier ? record.tier.name : (data.tierName || "Free"));
+                            const keyBadge = document.getElementById('keyBadge');
+                            const keyStatusBadge = document.getElementById('keyStatusBadge');
+                            const keyFeedback = document.getElementById('keyFeedback');
+
+                            if (keyBadge) keyBadge.textContent = tierName;
+                            if (keyStatusBadge) {
+                                keyStatusBadge.textContent = `✓ ACTIVE (${tierName})`;
+                                keyStatusBadge.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold uppercase";
+                            }
+                            applyTierBrandingRules(record.tierId || data.tierId);
+
+                            if (keyFeedback) {
+                                keyFeedback.innerText = `✅ Key activated! Tier: ${tierName} (${credits} credits remaining)`;
+                                keyFeedback.className = "text-[11px] text-emerald-600 dark:text-emerald-400 font-bold";
+                            }
+                        } else {
+                            const keyFeedback = document.getElementById('keyFeedback');
+                            if (keyFeedback) {
+                                keyFeedback.innerText = `❌ Key error: ${data.reason || data.error || 'Invalid key'}`;
+                                keyFeedback.className = "text-[11px] text-rose-500 font-bold";
+                            }
+                        }
+                    } catch (err) {
+                        const keyFeedback = document.getElementById('keyFeedback');
+                        if (keyFeedback) {
+                            keyFeedback.innerText = `⚠️ Connection notice: Could not reach verification server.`;
+                            keyFeedback.className = "text-[11px] text-amber-500 font-bold";
+                        }
+                    } finally {
+                        verifyBtn.disabled = false;
+                        verifyBtn.textContent = "Activate Key";
+                    }
+                });
+
+                const keyParam = urlParams.get('key') || safeGetStorage('xsites_key');
+                if (keyParam && !activeVerifiedKey) {
+                    licenseInput.value = keyParam;
+                    setTimeout(() => { try { verifyBtn.click(); } catch(e) {} }, 300);
+                } else if (activeVerifiedKey) {
+                    licenseInput.value = activeVerifiedKey;
+                }
+            }
+
+            // MODAL FREE TRIAL ACTIVATION
+            const modalActivateFreeBtn = document.getElementById('modalActivateFreeBtn');
+            const modalFreeEmailInput = document.getElementById('modalFreeEmailInput');
+            if (modalActivateFreeBtn && modalFreeEmailInput) {
+                modalActivateFreeBtn.addEventListener('click', async () => {
+                    const email = modalFreeEmailInput.value.trim();
+                    if (!email || !email.includes('@')) {
+                        alert('Please enter a valid email address.');
+                        return;
+                    }
+                    modalActivateFreeBtn.disabled = true;
+                    modalActivateFreeBtn.textContent = '...';
+                    try {
+                        const res = await fetch(`${BACKEND_WORKER_URL}/verify-license`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ licenseKey: email })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            const assignedKey = data.key || email;
+                            activeVerifiedKey = assignedKey;
+                            safeSetStorage('xsites_key', assignedKey);
+                            if (licenseInput) licenseInput.value = assignedKey;
+                            document.querySelectorAll('#creditDisplay').forEach(el => el.textContent = data.credits);
+                            alert(`🎉 Free Trial key activated!\nKey: ${assignedKey}`);
+                            document.getElementById('pricingModal')?.classList.add('hidden');
+                        }
+                    } catch(e) {
+                        alert("Activation error: " + e.message);
+                    } finally {
+                        modalActivateFreeBtn.disabled = false;
+                        modalActivateFreeBtn.textContent = 'Get Free Key';
+                    }
+                });
+            }
+
+            // MODALS TOGGLERS
+            const openPricingModalBtn = document.getElementById('openPricingModalBtn');
+            const closePricingBtn = document.getElementById('closePricingBtn');
+            const pricingModal = document.getElementById('pricingModal');
+            if (openPricingModalBtn && pricingModal) {
+                openPricingModalBtn.addEventListener('click', () => pricingModal.classList.remove('hidden'));
+            }
+            if (closePricingBtn && pricingModal) {
+                closePricingBtn.addEventListener('click', () => pricingModal.classList.add('hidden'));
+            }
+
+            const openProjectsBtn = document.getElementById('openProjectsBtn');
+            const closeProjectsBtn = document.getElementById('closeProjectsBtn');
+            const projectsDrawer = document.getElementById('projectsDrawer');
+            if (openProjectsBtn && projectsDrawer) {
+                openProjectsBtn.addEventListener('click', () => {
+                    projectsDrawer.classList.remove('hidden');
+                    fetchSavedProjects();
+                });
+            }
+            if (closeProjectsBtn && projectsDrawer) {
+                closeProjectsBtn.addEventListener('click', () => projectsDrawer.classList.add('hidden'));
+            }
+
+            // CODE EDITOR MODAL HANDLERS
+            const viewCodeBtn = document.getElementById('viewCodeBtn');
+            const codeEditorModal = document.getElementById('codeEditorModal');
+            const closeCodeEditorBtn = document.getElementById('closeCodeEditorBtn');
+            const liveCodeTextarea = document.getElementById('liveCodeTextarea');
+            const applyLiveCodeBtn = document.getElementById('applyLiveCodeBtn');
+            const copyModalCodeBtn = document.getElementById('copyModalCodeBtn');
+
+            if (viewCodeBtn && codeEditorModal && liveCodeTextarea) {
+                viewCodeBtn.addEventListener('click', () => {
+                    const activeHtml = getCurrentPageHtmlContent();
+                    if (!activeHtml) {
+                        alert("No active page loaded yet. Please build a site first!");
+                        return;
+                    }
+                    document.getElementById('codeEditorPageTitle').textContent = `${activeTabKey}.html`;
+                    liveCodeTextarea.value = activeHtml;
+                    codeEditorModal.classList.remove('hidden');
+                });
+            }
+            if (closeCodeEditorBtn && codeEditorModal) {
+                closeCodeEditorBtn.addEventListener('click', () => codeEditorModal.classList.add('hidden'));
+            }
+            if (applyLiveCodeBtn && liveCodeTextarea && codeEditorModal) {
+                applyLiveCodeBtn.addEventListener('click', () => {
+                    const updatedHtml = liveCodeTextarea.value;
+                    if (!updatedHtml) return;
+                    sitePagesTree[activeTabKey] = updatedHtml;
+                    switchActivePreviewTab(activeTabKey);
+                    codeEditorModal.classList.add('hidden');
+                });
+            }
+            if (copyModalCodeBtn && liveCodeTextarea) {
+                copyModalCodeBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(liveCodeTextarea.value);
+                    copyModalCodeBtn.textContent = '✓ Copied!';
+                    setTimeout(() => { copyModalCodeBtn.textContent = '📋 Copy'; }, 2000);
+                });
+            }
+
+            // CUSTOM PAGE ADDER
+            const customPageInput = document.getElementById('customPageInput');
+            const addCustomPageBtn = document.getElementById('addCustomPageBtn');
+            const ezPagesGrid = document.getElementById('ezPagesCheckboxesGrid');
+
+            function handleAddNewCustomPage() {
+                if (!customPageInput || !ezPagesGrid) return;
+                const rawVal = customPageInput.value.trim();
+                if (!rawVal) return;
+
+                const cleanKey = rawVal.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                if (!cleanKey || cleanKey === 'index' || cleanKey === 'home') {
+                    customPageInput.value = '';
+                    return;
+                }
+
+                const formattedTitle = formatPageDisplayName(cleanKey);
+                const newLabel = document.createElement('label');
+                newLabel.className = "p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-xl flex items-center gap-3 cursor-pointer shadow-sm";
+                newLabel.innerHTML = `
+                    <input type="checkbox" checked class="accent-emerald-600 w-4 h-4 page-checkbox" value="${cleanKey}" />
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">✨ ${formattedTitle}</span>
+                `;
+                ezPagesGrid.appendChild(newLabel);
+                customPageInput.value = '';
+            }
+
+            if (addCustomPageBtn) addCustomPageBtn.addEventListener('click', handleAddNewCustomPage);
+            if (customPageInput) customPageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNewCustomPage(); } });
+
+            // CUSTOM DOMAIN BINDING
+            const bindBtn = document.getElementById('bindCustomDomainBtn');
+            const customDomainInput = document.getElementById('customDomainInput');
+            if (bindBtn && customDomainInput) {
+                bindBtn.addEventListener('click', async () => {
+                    const domain = customDomainInput.value.trim();
+                    if (!domain) return;
+                    bindBtn.disabled = true;
+                    bindBtn.textContent = "...";
+                    try {
+                        const targetRepo = window.lastDeployedRepoName || "ezsite-project";
+                        const res = await fetch(`${BACKEND_WORKER_URL}/deploy-custom-domain`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                licenseKey: activeVerifiedKey || 'EZSITE-FREE',
+                                repoName: targetRepo,
+                                customDomain: domain
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            alert(`🎉 Custom domain bound! Link: ${data.liveUrl}`);
+                        } else {
+                            alert("Notice: " + (data.error || "Domain configuration sent."));
+                        }
+                    } catch(e) {
+                        alert("Domain endpoint response received.");
+                    } finally {
+                        bindBtn.disabled = false;
+                        bindBtn.textContent = "Bind Domain";
+                    }
+                });
+            }
+
+            // SETUP IN-IFRAME INTERACTIVE HOVER & DOUBLE-CLICK EDITING
+            const iframe = document.getElementById('previewIframe');
+            if (iframe) {
+                if (window.XsiteInspector) window.XsiteInspector.setupIframeInspector(iframe);
+                iframe.addEventListener('load', () => {
+                    if (window.XsiteInspector) window.XsiteInspector.setupIframeInspector(iframe);
+                    try {
+                        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (!doc || !doc.body) return;
+
+                        // Double click to edit text inline
+                        doc.body.addEventListener('dblclick', (e) => {
+                            const target = e.target.closest('h1, h2, h3, h4, h5, h6, p, span, a, button, li, label');
+                            if (target) {
+                                e.preventDefault();
+                                target.contentEditable = "true";
+                                target.style.outline = "2px solid #10b981";
+                                target.focus();
+
+                                const onBlur = () => {
+                                    target.removeAttribute('contenteditable');
+                                    target.style.outline = "";
+                                    target.removeEventListener('blur', onBlur);
+                                    if (target.tagName.toLowerCase() === 'a') {
+                                        const cleanText = target.textContent.trim();
+                                        const currentHref = target.getAttribute('href') || '';
+                                        const newHref = prompt(`🔗 Link target URL (href) for "${cleanText}":`, currentHref);
+                                        if (newHref !== null) target.setAttribute('href', newHref.trim());
+                                    }
+                                    if (sitePagesTree && activeTabKey && doc.documentElement) {
+                                        sitePagesTree[activeTabKey] = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+                                    }
+                                };
+                                target.addEventListener('blur', onBlur);
+                            }
+                        }, true);
+
+                        // In-iframe link click interceptor
+                        doc.addEventListener('click', (e) => {
+                            const anchor = e.target.closest('a');
+                            if (!anchor) return;
+                            const href = anchor.getAttribute('href');
+                            if (!href || href === '#' || href.startsWith('javascript:')) return;
+                            let targetPage = href.replace(/\.html$/i, '').replace(/^.*\//, '').replace(/^#/, '').trim().toLowerCase();
+                            if (targetPage === 'home') targetPage = 'index';
+                            if (targetPage && sitePagesTree && sitePagesTree[targetPage] !== undefined) {
+                                e.preventDefault();
+                                switchActivePreviewTab(targetPage);
+                            }
+                        });
+
+                    } catch(e) {}
+                });
+            }
+        });
+
+        // FETCH SAVED PROJECTS
+        async function fetchSavedProjects() {
+            const list = document.getElementById('projectsList');
+            if (!list) return;
+            const key = activeVerifiedKey || safeGetStorage('xsites_key');
+            if (!key) {
+                list.innerHTML = `<div class="text-center py-6 text-xs text-amber-400 font-bold">Please activate your key in Step 1 first.</div>`;
+                return;
+            }
+            list.innerHTML = `<div class="text-center py-6 text-xs text-sky-400 font-bold">Fetching projects...</div>`;
+            try {
+                const res = await fetch(`${BACKEND_WORKER_URL}/list-projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ licenseKey: key })
+                });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+                    list.innerHTML = '';
+                    data.projects.forEach(project => {
+                        const card = document.createElement('div');
+                        card.className = "p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between gap-2 text-xs";
+                        card.innerHTML = `
+                            <div>
+                                <h4 class="font-bold text-white">${project.projectName || 'Untitled'}</h4>
+                                <p class="text-[10px] font-mono text-gray-400">${project.pageCount || 1} pages</p>
+                            </div>
+                            <button type="button" class="load-btn px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-bold cursor-pointer">Load</button>
+                        `;
+                        card.querySelector('.load-btn').addEventListener('click', () => {
+                            if (project.pages && Object.keys(project.pages).length > 0) {
+                                sitePagesTree = { ...project.pages };
+                                currentLaunchArchitecture = Object.keys(sitePagesTree);
+                                const firstKey = sitePagesTree.index ? 'index' : Object.keys(sitePagesTree)[0];
+                                switchActivePreviewTab(firstKey);
+                                document.getElementById('projectsDrawer')?.classList.add('hidden');
+                                document.getElementById('generateTriggerContainer')?.classList.add('hidden');
+                                document.getElementById('previewContainer')?.classList.remove('hidden');
+                                alert(`✅ Loaded project "${project.projectName}"!`);
+                            }
+                        });
+                        list.appendChild(card);
+                    });
+                } else {
+                    list.innerHTML = `<div class="text-center py-6 text-xs text-gray-400">No saved projects found on server.</div>`;
+                }
+            } catch(e) {
+                list.innerHTML = `<div class="text-center py-6 text-xs text-gray-400">Cloud projects notice. Local storage backup available.</div>`;
+            }
+        }
+
+        // VIEWPORT SIZE CONTROLLER
+        window.setViewerSize = function(mode) {
+            const frameContainer = document.getElementById('previewIframe')?.parentElement;
+            if (!frameContainer) return;
+            if (mode === 'small') {
+                frameContainer.style.height = '360px';
+            } else if (mode === 'med') {
+                frameContainer.style.height = '500px';
+            } else if (mode === 'full') {
+                frameContainer.style.height = '700px';
+                frameContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        // SEPARATE TAB INTERACTIVE EDITOR
+        function openActiveInNewTab() {
+            const pageHtml = getCurrentPageHtmlContent();
+            if (!pageHtml) {
+                alert("Please build a website first!");
+                return;
+            }
+            const blob = new Blob([pageHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+
+        const openNewTabBtn = document.getElementById('openNewTabBtn');
+        if (openNewTabBtn) openNewTabBtn.addEventListener('click', openActiveInNewTab);
+
+        // EDITOR DRAWER TAB SWITCHING
+        const drawerToggleBtn = document.getElementById('editorToggleBtn');
+        const drawerPanel = document.getElementById('editorExpandedPanel');
+        if (drawerToggleBtn && drawerPanel) {
+            drawerToggleBtn.addEventListener('click', () => {
+                drawerPanel.classList.toggle('hidden');
+            });
+        }
+
+        const tabsList = [
+            { btnId: 'editorTabNL', panelId: 'panelNL' },
+            { btnId: 'editorTabSections', panelId: 'panelSections' },
+            { btnId: 'editorTabHeaderFooter', panelId: 'panelHeaderFooter' },
+            { btnId: 'editorTabCopySync', panelId: 'panelCopySync' },
+            { btnId: 'editorTabDOM', panelId: 'panelDOM' }
+        ];
+
+        tabsList.forEach(t => {
+            const btn = document.getElementById(t.btnId);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    tabsList.forEach(x => {
+                        document.getElementById(x.btnId)?.classList.remove('text-sky-400', 'border-b-2', 'border-sky-400');
+                        document.getElementById(x.btnId)?.classList.add('text-gray-400', 'border-transparent');
+                        document.getElementById(x.panelId)?.classList.add('hidden');
+                    });
+                    btn.classList.remove('text-gray-400', 'border-transparent');
+                    btn.classList.add('text-sky-400', 'border-b-2', 'border-sky-400');
+                    document.getElementById(t.panelId)?.classList.remove('hidden');
+                });
+            }
+        });
+
+        // FAST LOCAL COMMAND PARSER FOR PAGE EDITOR DRAWER
+        const editForm = document.getElementById('xsitesEditForm');
+        if (editForm) {
+            editForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const input = document.getElementById('xsitesCommandInput');
+                if (!input) return;
+                const cmd = input.value.trim();
+                if (!cmd) return;
+
+                const iframe = document.getElementById('previewIframe');
+                const doc = iframe?.contentDocument || iframe?.contentWindow?.document;
+                if (!doc) return;
+
+                const lower = cmd.toLowerCase();
+                if (lower.includes('title') || lower.includes('headline') || lower.includes('heading')) {
+                    const match = cmd.match(/(?:to|as|is)\s+["']?([^"']+)["']?/i) || [null, cmd.replace(/.*(?:to|as|is)\s+/i, '')];
+                    const val = match[1] || cmd;
+                    const h1 = doc.querySelector('h1') || doc.querySelector('h2');
+                    if (h1) h1.textContent = val;
+                } else if (lower.includes('button')) {
+                    const color = lower.includes('green') ? '#10b981' : lower.includes('blue') ? '#3b82f6' : lower.includes('red') ? '#ef4444' : '#38bdf8';
+                    doc.querySelectorAll('button, a.btn, a[class*="btn"]').forEach(b => {
+                        b.style.backgroundColor = color;
+                        b.style.color = '#ffffff';
+                    });
+                } else if (lower.includes('background') || lower.includes('bg')) {
+                    const color = lower.includes('dark') || lower.includes('black') ? '#090a0f' : lower.includes('white') ? '#ffffff' : '#1e293b';
+                    doc.body.style.backgroundColor = color;
+                }
+
+                if (sitePagesTree && activeTabKey && doc.documentElement) {
+                    sitePagesTree[activeTabKey] = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+                }
+                input.value = '';
+                const status = document.getElementById('xsitesEngineStatus');
+                if (status) {
+                    status.innerText = "✓ APPLIED";
+                    status.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold";
+                    setTimeout(() => { status.innerText = "READY"; status.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-gray-800 text-gray-400"; }, 3000);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

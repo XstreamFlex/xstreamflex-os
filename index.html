@@ -1,0 +1,256 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSTREAMFLEX OS // Master Suite Launchpad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="frontend/unified-auth.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            glow: '#10b981',
+                            darkBg: '#090a0f',
+                            panel: '#11131e',
+                            card: '#161926'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel {
+            background: rgba(17, 19, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans relative overflow-x-hidden selection:bg-emerald-500 selection:text-black">
+
+    <!-- Ambient background glows -->
+    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+    <!-- Navigation Header -->
+    <header class="border-b border-slate-800/80 backdrop-blur-md bg-slate-950/80 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="logo" class="h-8 w-auto object-contain">
+                    <span class="text-sm font-black tracking-widest uppercase bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">XSTREAMFLEX OS</span>
+                </a>
+                <span class="text-[9px] uppercase tracking-widest font-mono px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hidden sm:inline-block">Master Suite v2.0</span>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-5 text-xs font-semibold tracking-wide font-mono">
+                <a href="frontend/xsite.html" class="text-slate-400 hover:text-emerald-400 transition-colors">⚡ XSITE</a>
+                <a href="frontend/ezsite.html" class="text-slate-400 hover:text-emerald-400 transition-colors">🪄 EZsite</a>
+                <a href="frontend/xmg.html" class="text-slate-400 hover:text-emerald-400 transition-colors">🖼️ XMG Vault</a>
+                <a href="frontend/xmail.html" class="text-slate-400 hover:text-emerald-400 transition-colors">✉️ XMAIL</a>
+                <a href="frontend/account.html" class="text-slate-400 hover:text-emerald-400 transition-colors">📊 Account</a>
+            </nav>
+
+            <div class="flex items-center gap-3">
+                <a href="frontend/account.html" class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-mono font-bold rounded-lg transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
+                    <span>⚡ Launch Console</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-12 flex-1 flex flex-col justify-center">
+        <!-- Hero Title -->
+        <div class="text-center max-w-3xl mx-auto mb-12">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-mono mb-4">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>GitHub Pages Deployed &amp; Serverless-Ready</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4">
+                The Unified <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Xstreamflex OS</span> Suite
+            </h1>
+            <p class="text-slate-400 text-base md:text-lg leading-relaxed">
+                Autonomous multi-agent website generation, CDN image hosting &amp; media vault, and high-deliverability email marketing engine in one synchronized ecosystem.
+            </p>
+        </div>
+
+        <!-- Suite Apps Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            
+            <!-- XSITE Card -->
+            <div class="glass-panel rounded-2xl p-6 glow-hover transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            ⚡
+                        </div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">AI Web Engine</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">XSITE Studio</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Full-stack AI landing page generator with Gemini / Claude / Groq multi-model fallback, Design DNA scraper, and visual element inspector.
+                    </p>
+                </div>
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] font-mono text-slate-500">Subpages &bull; Live Sandbox</span>
+                    <a href="frontend/xsite.html" class="px-3 py-1.5 bg-slate-800 hover:bg-emerald-500 hover:text-black text-slate-200 text-xs font-mono font-semibold rounded-lg transition-all">
+                        Launch &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- EZsite Wizard Card -->
+            <div class="glass-panel rounded-2xl p-6 glow-hover transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            🪄
+                        </div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Guided Wizard</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">EZsite Wizard</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Step-by-step 5-minute site builder tailored for fast client deployment, instant niche themes, custom domains, and automated copy generation.
+                    </p>
+                </div>
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] font-mono text-slate-500">5-Step &bull; Instant Preview</span>
+                    <a href="frontend/ezsite.html" class="px-3 py-1.5 bg-slate-800 hover:bg-cyan-400 hover:text-black text-slate-200 text-xs font-mono font-semibold rounded-lg transition-all">
+                        Launch &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- XMG Vault Card -->
+            <div class="glass-panel rounded-2xl p-6 glow-hover transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            🖼️
+                        </div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">Media CDN Vault</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-violet-400 transition-colors">XMG Media Vault</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        High-speed image storage, drag-and-drop uploader, CDN embed code generator, visual tag filtering, and instant asset gallery for your campaigns.
+                    </p>
+                </div>
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] font-mono text-slate-500">Direct CDN &bull; Tag Filter</span>
+                    <a href="frontend/xmg.html" class="px-3 py-1.5 bg-slate-800 hover:bg-violet-400 hover:text-black text-slate-200 text-xs font-mono font-semibold rounded-lg transition-all">
+                        Launch &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- XMAIL Engine Card -->
+            <div class="glass-panel rounded-2xl p-6 glow-hover transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            ✉️
+                        </div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Email Engine</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">XMAIL Studio</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Modern responsive newsletter builder, list segmentation, broadcast analytics, automated drip workflows, and direct SMTP/Worker dispatch.
+                    </p>
+                </div>
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] font-mono text-slate-500">SMTP &bull; Visual Editor</span>
+                    <a href="frontend/xmail.html" class="px-3 py-1.5 bg-slate-800 hover:bg-amber-400 hover:text-black text-slate-200 text-xs font-mono font-semibold rounded-lg transition-all">
+                        Launch &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Unified Account Hub Card -->
+            <div class="glass-panel rounded-2xl p-6 glow-hover transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            📊
+                        </div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Identity &amp; Tokens</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-rose-400 transition-colors">Account &amp; License Hub</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Single Sign-On management, Master Admin credentials, token balance replenishment, GitHub Pages deployment tokens, and saved site vaults.
+                    </p>
+                </div>
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] font-mono text-slate-500">SSO &bull; License Vault</span>
+                    <a href="frontend/account.html" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-400 hover:text-black text-slate-200 text-xs font-mono font-semibold rounded-lg transition-all">
+                        Manage &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Backend Services Card -->
+            <div class="glass-panel rounded-2xl p-6 glow-hover transition-all duration-300 flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                            ⚙️
+                        </div>
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Services &amp; APIs</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">Cloudflare &amp; Workers</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed mb-4">
+                        Pre-configured serverless Worker scripts, R2 image bucket bindings, Influencersoft webhooks, and GitHub repository creation pipelines.
+                    </p>
+                </div>
+                <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] font-mono text-slate-500">Wrangler &bull; Standalone Packages</span>
+                    <a href="frontend/account.html" class="px-3 py-1.5 bg-slate-800 hover:bg-indigo-400 hover:text-black text-slate-200 text-xs font-mono font-semibold rounded-lg transition-all">
+                        Configure &rarr;
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Quick Status Banner -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+            <div class="flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span class="text-slate-300">All local modules compiled &amp; GitHub Pages ready.</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-slate-500">Default Dev Bypass:</span>
+                <code class="px-2 py-0.5 rounded bg-slate-800 text-emerald-300 border border-slate-700">XSTREAM-ADMIN-DEV-99</code>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs font-mono text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>&copy; 2026 XSTREAMFLEX OS &bull; All Rights Reserved.</span>
+            <div class="flex items-center gap-4">
+                <a href="frontend/xsite.html" class="hover:text-slate-300 transition">XSITE</a>
+                <a href="frontend/xmg.html" class="hover:text-slate-300 transition">XMG</a>
+                <a href="frontend/xmail.html" class="hover:text-slate-300 transition">XMAIL</a>
+                <a href="frontend/account.html" class="hover:text-slate-300 transition">Account</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

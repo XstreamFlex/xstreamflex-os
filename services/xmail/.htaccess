@@ -1,0 +1,29 @@
+# Apache & LiteSpeed configuration for XMail Autoresponder
+
+# Set default directory index file
+DirectoryIndex public/index.html index.html server.js
+
+# Disable directory browsing to prevent 403 errors
+Options -Indexes
+
+# Phusion Passenger configuration (cPanel / LiteSpeed Node.js)
+<IfModule mod_passenger.c>
+    PassengerAppRoot "."
+    PassengerStartupFile server.js
+    PassengerEnabled on
+    PassengerAppType node
+</IfModule>
+
+# Fallback Rewrite Rules
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Serve public folder files directly if requested
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^(.+)$ public/$1 [L]
+    
+    # Route root traffic to public/index.html
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^$ public/index.html [L]
+</IfModule>

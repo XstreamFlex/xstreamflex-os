@@ -1,0 +1,28 @@
+{
+  "name": "xmail-autoresponder",
+  "version": "1.0.0",
+  "description": "XStreamFlex Autoresponder System for Xsites & EZsites",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "worker": "node jobs/process_queue.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "autoresponder",
+    "xstreamflex",
+    "xsites",
+    "ezsites",
+    "email-marketing"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0",
+    "nodemailer": "^6.10.0",
+    "sqlite3": "^5.1.7"
+  }
+}

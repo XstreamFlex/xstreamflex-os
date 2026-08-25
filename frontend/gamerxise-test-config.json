@@ -1,0 +1,42 @@
+{
+  "brand": "Gamerxise",
+  "domain": "gamerxise.com",
+  "influencersoftWebhookUrl": "https://gamerxise.influencersoft.com/api/addupdatelead",
+  "products": [
+    {
+      "id": "gamerxise-fit-rig",
+      "title": "Gamerxise VR Motion Fitness Rig",
+      "category": "Gaming Fitness Hardware",
+      "price": "$499.00",
+      "rating": "5.0/5",
+      "description": "Turn high-intensity gaming sessions into full-body fat-burning workouts.",
+      "features": ["Zero-Latency VR Sensor Tracking", "Adjustable Resistance Cables", "Companion iOS/Android Fitness App"],
+      "buyUrl": "https://gamerxise.influencersoft.com/orders/fit-rig"
+    },
+    {
+      "id": "gamerxise-pro-app",
+      "title": "Gamerxise Pro Workout Pass",
+      "category": "Subscription",
+      "price": "$19.99/mo",
+      "rating": "4.9/5",
+      "description": "Unlimited daily multiplayer workout challenges and esports leaderboards.",
+      "features": ["Daily Live Trainers", "Leaderboard Prizes", "Heart Rate Sync"],
+      "buyUrl": "https://gamerxise.influencersoft.com/orders/pro-pass"
+    }
+  ],
+  "blogTopics": [
+    {
+      "id": "topic-vr-cardio",
+      "name": "VR Cardio & Esports Fitness",
+      "targetLocation": "vr-cardio-hub.html",
+      "description": "How gaming is revolutionizing high-intensity interval training."
+    },
+    {
+      "id": "topic-posture-gaming",
+      "name": "Ergonomics & Posture Correction",
+      "targetLocation": "posture-hub.html",
+      "description": "Stretches and training routines for long gaming sessions."
+    }
+  ],
+  "qcCheckPassed": true
+}

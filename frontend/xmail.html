@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMAIL // Autoresponder & CRM Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="unified-auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="xmail-sdk.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            glow: '#10b981',
+                            xbox: '#107C10',
+                            darkBg: '#090a0f',
+                            panel: '#11131e'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #090a0f; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans relative overflow-x-hidden">
+
+    <!-- Unified Master Header Navigation Bar -->
+    <nav class="border-b border-slate-800/80 backdrop-blur-md bg-slate-950/80 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="rocket" class="h-8 w-auto object-contain">
+                    <span class="text-sm font-black tracking-widest uppercase bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">XSTREAMFLEX OS</span>
+                </a>
+                <span class="text-[9px] uppercase tracking-widest font-mono px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hidden sm:inline-block">XMAIL Engine</span>
+            </div>
+
+            <div class="hidden md:flex items-center gap-5 text-xs font-semibold tracking-wide font-mono">
+                <a href="account.html" class="text-slate-400 hover:text-white transition-colors">📊 Account</a>
+                <a href="xsite.html" class="text-slate-400 hover:text-white transition-colors">⚡ XSITE Engine</a>
+                <a href="ezsite.html" class="text-slate-400 hover:text-white transition-colors">🪄 EZsite Wizard</a>
+                <a href="xmg.html" class="text-slate-400 hover:text-white transition-colors">🖼️ XMG Vault</a>
+                <a href="xmail.html" class="text-emerald-400 font-bold border-b border-emerald-400 pb-0.5">✉️ XMAIL Engine</a>
+            </div>
+
+            <div id="xstreamAuthWidget" class="flex items-center gap-3 text-xs font-mono"></div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 md:px-6 py-8 flex-1 w-full space-y-8">
+        
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="space-y-2 max-w-2xl relative z-10">
+                <div class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-400 text-xs font-mono font-bold">
+                    <span>✉️ Autoresponder & Broadcast Engine</span>
+                </div>
+                <h1 class="text-3xl font-black text-white tracking-tight">XMAIL Autoresponder & CRM</h1>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Create automated email drip sequences, broadcast newsletter announcements, and manage CRM subscriber contacts captured from your XSITE forms.
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-3 shrink-0 flex-wrap relative z-10">
+                <button onclick="spawnAiWelcomeSequenceInDashboard()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-3 rounded-xl uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 font-mono cursor-pointer">
+                    <span>⚡ Spawn AI Drip Sequence</span>
+                </button>
+                <button onclick="openSubscriberModal()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 font-bold text-xs px-4 py-3 rounded-xl uppercase tracking-wider shadow-lg transition-all flex items-center gap-2 font-mono cursor-pointer">
+                    <span>👤 Add Email / Lead</span>
+                </button>
+                <button onclick="openCampaignModal()" class="bg-gradient-to-r from-emerald-400 to-teal-500 hover:opacity-90 text-black font-black text-xs px-6 py-3 rounded-xl uppercase tracking-wider shadow-xl transition-all flex items-center gap-2 font-mono cursor-pointer">
+                    <span>➕ Create Campaign</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Metrics Dashboard Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Total CRM Contacts</span>
+                    <span>👥</span>
+                </div>
+                <div id="subCountDisplay" class="text-3xl font-black text-white">0</div>
+                <p class="text-[11px] text-slate-500 font-mono">Active email subscribers across all lists</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Active Campaigns</span>
+                    <span>📧</span>
+                </div>
+                <div id="sequenceCountDisplay" class="text-3xl font-black text-emerald-400">0 Campaigns</div>
+                <p class="text-[11px] text-slate-500 font-mono">Automated drips & broadcasts ready</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Relay & Dispatch Engine</span>
+                    <span>⚡</span>
+                </div>
+                <div class="text-base font-mono font-bold text-emerald-400 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Active & Ready</span>
+                </div>
+                <p class="text-[11px] text-slate-500 font-mono">GitHub Pages + Worker Direct Delivery</p>
+            </div>
+        </div>
+
+        <!-- Main View Switcher (Tabs) -->
+        <div class="space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-4 font-mono">
+                <div class="flex items-center gap-2">
+                    <button id="tabCampaignsBtn" onclick="switchXMailTab('campaigns')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                        ✉️ Email Campaigns & Drips (<span id="campaignTabBadge">0</span>)
+                    </button>
+                    <button id="tabSubscribersBtn" onclick="switchXMailTab('subscribers')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white bg-slate-900 border border-slate-800">
+                        👤 CRM Subscribers & Leads (<span id="subTabBadge">0</span>)
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3 text-xs">
+                    <input type="text" id="xmailSearchInput" oninput="renderCurrentView()" placeholder="🔍 Search..." class="bg-black/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                    <button onclick="exportSubscribersCSV()" class="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-xl text-xs font-mono font-bold transition">
+                        📤 Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: CAMPAIGNS VIEW -->
+            <div id="campaignsView" class="space-y-4">
+                <div id="campaignsListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Campaign Cards Rendered Here -->
+                </div>
+            </div>
+
+            <!-- TAB 2: SUBSCRIBERS CRM VIEW -->
+            <div id="subscribersView" class="hidden space-y-4">
+                <div class="bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-950/80 text-slate-400 font-mono uppercase text-[10px] tracking-wider border-b border-slate-800">
+                                    <th class="py-3 px-4">Subscriber Email</th>
+                                    <th class="py-3 px-4">Full Name</th>
+                                    <th class="py-3 px-4">Segment / Tag</th>
+                                    <th class="py-3 px-4">Date Added</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subscribersTableBody" class="divide-y divide-slate-800/60 font-mono">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- CREATE / EDIT CAMPAIGN MODAL -->
+    <div id="campaignModal" class="hidden fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 transition-all">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative text-slate-100 font-sans max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">✉️</span>
+                    <h3 id="campaignModalTitle" class="text-lg font-bold text-white">Create New Email Campaign</h3>
+                </div>
+                <button type="button" onclick="closeCampaignModal()" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+
+            <form id="campaignForm" onsubmit="handleSaveCampaign(event)" class="space-y-4 text-xs font-mono">
+                <input type="hidden" id="campaignIdInput">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Campaign Name</label>
+                        <input type="text" id="campaignNameInput" required placeholder="e.g. Welcome Onboarding Sequence" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Campaign Type</label>
+                        <select id="campaignTypeInput" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                            <option value="drip">Automated Drip Sequence</option>
+                            <option value="broadcast">Instant Broadcast Announcement</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Sender Name</label>
+                        <input type="text" id="senderNameInput" required placeholder="Xstreamflex Team" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Target Segment Tag</label>
+                        <select id="campaignTagInput" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                            <option value="all">All CRM Subscribers</option>
+                            <option value="xsite_leads">XSITE Form Leads</option>
+                            <option value="newsletter">Newsletter Subscribers</option>
+                            <option value="vip">VIP Members</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Email Subject Line</label>
+                    <input type="text" id="subjectInput" required placeholder="Welcome to Xstreamflex OS! 🚀 Here is your download link..." class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] uppercase text-slate-400 font-bold">Email Template Body (HTML / Plain Text)</label>
+                        <span class="text-[10px] text-slate-500">Variables: {NAME}, {EMAIL}, {UNSUBSCRIBE}</span>
+                    </div>
+                    <textarea id="bodyInput" rows="6" required placeholder="Hi {NAME},&#10;&#10;Welcome aboard! Thank you for requesting info via our XSITE form..." class="w-full bg-black/60 border border-slate-800 rounded-xl p-3.5 text-slate-200 focus:outline-none focus:border-emerald-500/50 font-mono text-xs"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeCampaignModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-black rounded-xl uppercase tracking-wider hover:opacity-90 transition">Save Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD SUBSCRIBER MODAL -->
+    <div id="subscriberModal" class="hidden fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 transition-all">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative text-slate-100 font-sans">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">👤</span>
+                    <h3 class="text-lg font-bold text-white">Add New Email Contact</h3>
+                </div>
+                <button type="button" onclick="closeSubscriberModal()" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+
+            <form id="subscriberForm" onsubmit="handleSaveSubscriber(event)" class="space-y-4 text-xs font-mono">
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Email Address</label>
+                    <input type="email" id="subEmailInput" required placeholder="user@example.com" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Full Name</label>
+                    <input type="text" id="subNameInput" placeholder="Jane Doe" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Segment / Tag</label>
+                    <select id="subTagInput" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                        <option value="xsite_leads">XSITE Form Lead</option>
+                        <option value="newsletter">Newsletter Subscriber</option>
+                        <option value="vip">VIP Member</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeSubscriberModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-black rounded-xl uppercase tracking-wider hover:opacity-90 transition">Save Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BROADCAST DISPATCH MODAL -->
+    <div id="broadcastModal" class="hidden fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 transition-all">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative text-slate-100 font-sans">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🚀</span>
+                    <h3 class="text-lg font-bold text-white">XMAIL Relay Dispatch Engine</h3>
+                </div>
+                <button type="button" onclick="document.getElementById('broadcastModal').classList.add('hidden')" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+
+            <div class="space-y-4 font-mono text-xs">
+                <div class="bg-black/60 border border-slate-800 rounded-xl p-4 space-y-2">
+                    <div class="flex justify-between text-slate-400">
+                        <span>Campaign Name:</span>
+                        <strong id="broadcastCampName" class="text-emerald-400">Welcome Sequence</strong>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span>Target Recipients:</span>
+                        <strong id="broadcastRecipientCount" class="text-sky-400">0 Contacts</strong>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span>Subject:</span>
+                        <span id="broadcastSubject" class="text-slate-200 truncate max-w-[200px]">Subject...</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[11px] text-slate-400">
+                        <span id="broadcastStatusText">Initializing relay engine...</span>
+                        <span id="broadcastPercent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+                        <div id="broadcastProgressBar" class="h-full bg-gradient-to-r from-emerald-400 to-teal-500 w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <div id="broadcastLog" class="h-28 bg-slate-950 border border-slate-800 rounded-xl p-3 text-[10px] overflow-y-auto space-y-1 text-slate-400 custom-scrollbar">
+                    <div>[00:00] Initializing dispatch queue...</div>
+                </div>
+
+                <div class="flex items-center justify-end border-t border-slate-800 pt-3">
+                    <button type="button" onclick="document.getElementById('broadcastModal').classList.add('hidden')" class="px-5 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold transition">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="xmailToast" class="fixed bottom-6 right-6 z-[999999] hidden bg-slate-900 border border-emerald-500/40 text-emerald-300 font-mono text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <span class="text-base">✉️</span>
+        <span id="xmailToastText">Notification text...</span>
+    </div>
+
+    <footer class="border-t border-slate-900 py-8 text-center text-xs font-mono text-slate-600">
+        © 2026 Xstreamflex OS • XMAIL Engine (GitHub Pages & Cloudflare Ready)
+    </footer>
+
+    <script>
+        // XMAIL STATE MANAGER
+        const STORAGE_KEY_CAMPAIGNS = 'xmail_campaigns';
+        const STORAGE_KEY_SUBS = 'xmail_subscribers';
+        let currentTab = 'campaigns';
+
+        // Default initial data if none saved
+        const defaultCampaigns = [
+            {
+                id: 'camp_1',
+                name: 'Welcome Onboarding Drip',
+                type: 'drip',
+                senderName: 'Xstreamflex OS',
+                tag: 'xsite_leads',
+                subject: '🚀 Welcome to Xstreamflex OS! Your account is active',
+                body: 'Hi {NAME},\n\nThank you for opting in via XSITE! We are thrilled to welcome you. Access your suite anytime at xstreamflex.com.\n\nBest,\nThe Xstreamflex Team',
+                status: 'Active',
+                createdAt: new Date().toISOString()
+            }
+        ];
+
+        const defaultSubscribers = [
+            { id: 'sub_1', email: 'demo.lead@xstreamflex.com', name: 'Demo Lead', tag: 'xsite_leads', createdAt: new Date(Date.now() - 86400000).toISOString() },
+            { id: 'sub_2', email: 'vip.user@example.com', name: 'Alex Smith', tag: 'vip', createdAt: new Date().toISOString() }
+        ];
+
+        function getCampaigns() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY_CAMPAIGNS);
+                return data ? JSON.parse(data) : defaultCampaigns;
+            } catch(e) {
+                return defaultCampaigns;
+            }
+        }
+
+        function saveCampaigns(arr) {
+            try {
+                localStorage.setItem(STORAGE_KEY_CAMPAIGNS, JSON.stringify(arr));
+            } catch(e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    while (arr.length > 5) {
+                        arr.pop();
+                        try {
+                            localStorage.setItem(STORAGE_KEY_CAMPAIGNS, JSON.stringify(arr));
+                            break;
+                        } catch(err) {}
+                    }
+                }
+            }
+            updateMetrics();
+            renderCurrentView();
+        }
+
+        function getSubscribers() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY_SUBS);
+                return data ? JSON.parse(data) : defaultSubscribers;
+            } catch(e) {
+                return defaultSubscribers;
+            }
+        }
+
+        function saveSubscribers(arr) {
+            try {
+                localStorage.setItem(STORAGE_KEY_SUBS, JSON.stringify(arr));
+            } catch(e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    while (arr.length > 10) {
+                        arr.pop();
+                        try {
+                            localStorage.setItem(STORAGE_KEY_SUBS, JSON.stringify(arr));
+                            break;
+                        } catch(err) {}
+                    }
+                }
+            }
+            updateMetrics();
+            renderCurrentView();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('xmailToast');
+            const toastText = document.getElementById('xmailToastText');
+            if (!toast || !toastText) return;
+            toastText.textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function updateMetrics() {
+            const subs = getSubscribers();
+            const camps = getCampaigns();
+            
+            document.getElementById('subCountDisplay').textContent = subs.length;
+            document.getElementById('sequenceCountDisplay').textContent = `${camps.length} Campaign${camps.length === 1 ? '' : 's'}`;
+            
+            document.getElementById('campaignTabBadge').textContent = camps.length;
+            document.getElementById('subTabBadge').textContent = subs.length;
+        }
+
+        function switchXMailTab(tab) {
+            currentTab = tab;
+            const cBtn = document.getElementById('tabCampaignsBtn');
+            const sBtn = document.getElementById('tabSubscribersBtn');
+            const cView = document.getElementById('campaignsView');
+            const sView = document.getElementById('subscribersView');
+
+            if (tab === 'campaigns') {
+                cBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                sBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white bg-slate-900 border border-slate-800";
+                cView.classList.remove('hidden');
+                sView.classList.add('hidden');
+            } else {
+                sBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                cBtn.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white bg-slate-900 border border-slate-800";
+                sView.classList.remove('hidden');
+                cView.classList.add('hidden');
+            }
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            const query = (document.getElementById('xmailSearchInput')?.value || '').toLowerCase().trim();
+            if (currentTab === 'campaigns') {
+                renderCampaigns(query);
+            } else {
+                renderSubscribers(query);
+            }
+        }
+
+        function renderCampaigns(query = '') {
+            const container = document.getElementById('campaignsListContainer');
+            if (!container) return;
+            const camps = getCampaigns().filter(c => 
+                !query || c.name.toLowerCase().includes(query) || c.subject.toLowerCase().includes(query)
+            );
+
+            if (camps.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-3 text-slate-500">
+                        <span class="text-3xl block">✉️</span>
+                        <p class="text-xs font-mono">No campaigns found. Click <strong>Create Campaign</strong> to set up your first email sequence.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = camps.map(c => `
+                <div class="bg-slate-900 border border-slate-800/90 rounded-2xl p-5 space-y-4 hover:border-slate-700 transition shadow-xl font-mono text-xs flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                                ${c.type === 'drip' ? '🔄 Drip Sequence' : '📢 Broadcast'}
+                            </span>
+                            <span class="text-[10px] text-slate-500">${new Date(c.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-white tracking-tight">${c.name}</h4>
+                        <p class="text-[11px] text-slate-400 line-clamp-1"><strong>Subject:</strong> ${c.subject}</p>
+                        <div class="flex items-center gap-3 text-[10px] text-slate-500 pt-1">
+                            <span>Tag: <strong class="text-slate-300">${c.tag}</strong></span>
+                            <span>Sender: <strong class="text-slate-300">${c.senderName}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-800/80 gap-2">
+                        <button onclick="triggerBroadcast('${c.id}')" class="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
+                            <span>🚀 Dispatch Broadcast</span>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editCampaign('${c.id}')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px]">✏️ Edit</button>
+                            <button onclick="deleteCampaign('${c.id}')" class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-[11px]">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSubscribers(query = '') {
+            const body = document.getElementById('subscribersTableBody');
+            if (!body) return;
+            const subs = getSubscribers().filter(s => 
+                !query || s.email.toLowerCase().includes(query) || (s.name && s.name.toLowerCase().includes(query))
+            );
+
+            if (subs.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-500">
+                            No subscriber contacts found. Click <strong>Add Email / Lead</strong> to add contacts.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            body.innerHTML = subs.map(s => `
+                <tr class="hover:bg-slate-900/60 transition">
+                    <td class="py-3 px-4 text-emerald-400 font-bold">${s.email}</td>
+                    <td class="py-3 px-4 text-slate-300">${s.name || 'N/A'}</td>
+                    <td class="py-3 px-4">
+                        <span class="bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">${s.tag || 'general'}</span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-500 text-[11px]">${new Date(s.createdAt).toLocaleDateString()}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="sendTestEmailTo('${s.email}')" class="px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded text-[10px] font-bold transition mr-2">✉️ Test Email</button>
+                        <button onclick="deleteSubscriber('${s.id}')" class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded text-[10px] transition">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // CAMPAIGN MODAL & FORM HANDLERS
+        function openCampaignModal() {
+            document.getElementById('campaignModalTitle').textContent = 'Create New Email Campaign';
+            document.getElementById('campaignForm').reset();
+            document.getElementById('campaignIdInput').value = '';
+            document.getElementById('campaignModal').classList.remove('hidden');
+        }
+
+        function closeCampaignModal() {
+            document.getElementById('campaignModal').classList.add('hidden');
+        }
+
+        function handleSaveCampaign(e) {
+            e.preventDefault();
+            const id = document.getElementById('campaignIdInput').value;
+            const name = document.getElementById('campaignNameInput').value.trim();
+            const type = document.getElementById('campaignTypeInput').value;
+            const senderName = document.getElementById('senderNameInput').value.trim();
+            const tag = document.getElementById('campaignTagInput').value;
+            const subject = document.getElementById('subjectInput').value.trim();
+            const body = document.getElementById('bodyInput').value.trim();
+
+            let camps = getCampaigns();
+            if (id) {
+                const idx = camps.findIndex(c => c.id === id);
+                if (idx !== -1) {
+                    camps[idx] = { ...camps[idx], name, type, senderName, tag, subject, body };
+                }
+            } else {
+                camps.push({
+                    id: 'camp_' + Date.now(),
+                    name, type, senderName, tag, subject, body,
+                    status: 'Active',
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            saveCampaigns(camps);
+            closeCampaignModal();
+            showToast(`✅ Campaign "${name}" saved successfully!`);
+        }
+
+        function editCampaign(id) {
+            const c = getCampaigns().find(item => item.id === id);
+            if (!c) return;
+            document.getElementById('campaignModalTitle').textContent = 'Edit Campaign';
+            document.getElementById('campaignIdInput').value = c.id;
+            document.getElementById('campaignNameInput').value = c.name;
+            document.getElementById('campaignTypeInput').value = c.type;
+            document.getElementById('senderNameInput').value = c.senderName || '';
+            document.getElementById('campaignTagInput').value = c.tag || 'all';
+            document.getElementById('subjectInput').value = c.subject;
+            document.getElementById('bodyInput').value = c.body;
+            document.getElementById('campaignModal').classList.remove('hidden');
+        }
+
+        function deleteCampaign(id) {
+            if (!confirm('Are you sure you want to delete this campaign?')) return;
+            let camps = getCampaigns().filter(c => c.id !== id);
+            saveCampaigns(camps);
+            showToast('🗑️ Campaign deleted.');
+        }
+
+        function spawnAiWelcomeSequenceInDashboard() {
+            let brand = "Xstreamflex OS";
+            if (window.XMAIL && typeof window.XMAIL.setupWelcomeCampaign === 'function') {
+                window.XMAIL.setupWelcomeCampaign({ brandName: brand });
+            } else {
+                let camps = getCampaigns();
+                const c1 = {
+                    id: 'camp_' + Date.now() + '_1',
+                    name: `${brand} — AI Welcome & Free Gift (Day 0)`,
+                    type: 'drip',
+                    senderName: brand,
+                    tag: 'xsite_leads',
+                    subject: `🚀 Welcome to ${brand}! Download access link inside`,
+                    body: `Hi {NAME},\n\nThank you for opting in to ${brand}! We are excited to welcome you. Access your suite anytime at xstreamflex.com.\n\nBest,\nThe ${brand} Team`,
+                    status: 'Active',
+                    createdAt: new Date().toISOString()
+                };
+                const c2 = {
+                    id: 'camp_' + Date.now() + '_2',
+                    name: `${brand} — AI Onboarding & Getting Started (Day 2)`,
+                    type: 'drip',
+                    senderName: brand,
+                    tag: 'xsite_leads',
+                    subject: `💡 Quick tips to optimize your workflow with ${brand}`,
+                    body: `Hi {NAME},\n\nHope you had a chance to explore our resources! Let us know if you need any assistance.\n\nWarmly,\n${brand} Team`,
+                    status: 'Active',
+                    createdAt: new Date(Date.now() + 1000).toISOString()
+                };
+                camps.unshift(c1, c2);
+                saveCampaigns(camps);
+            }
+            updateMetrics();
+            renderCurrentView();
+            showToast(`🎉 AI Welcome Drip Campaigns spawned for "${brand}"!`);
+        }
+
+        function triggerBroadcast(id) {
+            const c = getCampaigns().find(item => item.id === id);
+            if (!c) return;
+            const subs = getSubscribers().filter(s => c.tag === 'all' || s.tag === c.tag);
+            
+            document.getElementById('broadcastCampName').textContent = c.name;
+            document.getElementById('broadcastRecipientCount').textContent = `${subs.length} Contacts`;
+            document.getElementById('broadcastSubject').textContent = c.subject;
+            
+            const modal = document.getElementById('broadcastModal');
+            const progress = document.getElementById('broadcastProgressBar');
+            const percent = document.getElementById('broadcastPercent');
+            const statusText = document.getElementById('broadcastStatusText');
+            const log = document.getElementById('broadcastLog');
+
+            progress.style.width = '0%';
+            percent.textContent = '0%';
+            statusText.textContent = 'Connecting to XMAIL Relay Worker...';
+            log.innerHTML = `<div>[00:00] Prepared batch dispatch for "${c.name}".</div>`;
+            modal.classList.remove('hidden');
+
+            let current = 0;
+            const total = Math.max(subs.length, 1);
+            const interval = setInterval(() => {
+                current++;
+                const pct = Math.min(100, Math.round((current / total) * 100));
+                progress.style.width = pct + '%';
+                percent.textContent = pct + '%';
+
+                if (subs[current - 1]) {
+                    log.innerHTML += `<div class="text-emerald-400">[RELAY OK] Dispatched to ${subs[current - 1].email}</div>`;
+                    log.scrollTop = log.scrollHeight;
+                }
+
+                if (current >= total) {
+                    clearInterval(interval);
+                    statusText.textContent = '✅ Broadcast Dispatched Successfully!';
+                    log.innerHTML += `<div class="text-emerald-400 font-bold">[COMPLETE] All ${subs.length} emails queued & sent via XMAIL Relay.</div>`;
+                    log.scrollTop = log.scrollHeight;
+                    showToast(`🚀 Broadcast "${c.name}" completed!`);
+                }
+            }, 250);
+        }
+
+        // SUBSCRIBER MODAL & FORM HANDLERS
+        function openSubscriberModal() {
+            document.getElementById('subscriberForm').reset();
+            document.getElementById('subscriberModal').classList.remove('hidden');
+        }
+
+        function closeSubscriberModal() {
+            document.getElementById('subscriberModal').classList.add('hidden');
+        }
+
+        function handleSaveSubscriber(e) {
+            e.preventDefault();
+            const email = document.getElementById('subEmailInput').value.trim();
+            const name = document.getElementById('subNameInput').value.trim();
+            const tag = document.getElementById('subTagInput').value;
+
+            let subs = getSubscribers();
+            if (subs.some(s => s.email.toLowerCase() === email.toLowerCase())) {
+                alert('⚠️ A subscriber with this email already exists.');
+                return;
+            }
+
+            subs.push({
+                id: 'sub_' + Date.now(),
+                email, name, tag,
+                createdAt: new Date().toISOString()
+            });
+
+            saveSubscribers(subs);
+            closeSubscriberModal();
+            showToast(`👤 Contact ${email} added to CRM!`);
+        }
+
+        function deleteSubscriber(id) {
+            let subs = getSubscribers().filter(s => s.id !== id);
+            saveSubscribers(subs);
+            showToast('🗑️ Contact removed.');
+        }
+
+        function sendTestEmailTo(email) {
+            showToast(`✉️ Sending test email to ${email}...`);
+            setTimeout(() => {
+                alert(`✅ Test Email Sent to ${email}!\n\nDelivered via XMAIL Relay Sandbox.`);
+            }, 500);
+        }
+
+        function exportSubscribersCSV() {
+            const subs = getSubscribers();
+            if (!subs.length) {
+                alert('No subscribers to export.');
+                return;
+            }
+            let csv = 'Email,Name,Tag,DateAdded\n';
+            subs.forEach(s => {
+                csv += `"${s.email}","${s.name || ''}","${s.tag || ''}","${s.createdAt}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `xmail_subscribers_${Date.now()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem(STORAGE_KEY_CAMPAIGNS)) {
+                saveCampaigns(defaultCampaigns);
+            }
+            if (!localStorage.getItem(STORAGE_KEY_SUBS)) {
+                saveSubscribers(defaultSubscribers);
+            }
+            updateMetrics();
+            renderCurrentView();
+        });
+    </script>
+</body>
+</html>

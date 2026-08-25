@@ -1,0 +1,5 @@
+# Apache & LiteSpeed configuration for PHP XMail Autoresponder
+DirectoryIndex index.php index.html
+
+# Disable directory browsing
+Options -Indexes
