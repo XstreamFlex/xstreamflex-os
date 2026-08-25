@@ -2647,19 +2647,34 @@ async function callBestAI(userPrompt, systemPrompt, env) {
   const providers = [
     { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, env.GROQ_API_KEY) },
     { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, env.CLAUDE_API_KEY) },
-    { name: 'Gemini', func: () => callGemini(userPrompt, env.GEMINI_API_KEY) },
-    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, env.KIMI_API_KEY) }
+    { name: 'Gemini', func: () => callGemini(userPrompt, systemPrompt, env.GEMINI_API_KEY) },
+    { name: 'DeepSeek', func: () => callDeepSeek(userPrompt, systemPrompt, env.DEEPSEEK_API_KEY) },
+    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, env.KIMI_API_KEY) },
+    { name: 'WorkersAI', func: () => callCloudflareAI(userPrompt, systemPrompt, env.AI) }
   ];
 
   for (const provider of providers) {
     try {
       const html = await provider.func();
-      if (html && !html.includes("high demand")) return cleanResponse(html);
+      if (html && !html.includes("high demand") && html.length > 50) return cleanResponse(html);
     } catch (e) {
       console.warn(`Fallback Layer: ${provider.name} bypassed: ${e.message}`);
     }
   }
   throw new Error("All backend fallback execution paths are currently exhausted.");
+}
+
+async function callCloudflareAI(userPrompt, systemPrompt, aiBinding) {
+  if (!aiBinding) throw new Error("Missing Workers AI binding");
+  const res = await aiBinding.run('@cf/meta/llama-3.3-70b-instruct', {
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    max_tokens: 8192
+  });
+  if (res && res.response) return res.response;
+  throw new Error("Empty response from Workers AI");
 }
 
 async function callGroq(userPrompt, systemPrompt, key) {
@@ -2674,6 +2689,7 @@ async function callGroq(userPrompt, systemPrompt, key) {
     })
   });
   const data = await res.json();
+  if (data.error) throw new Error(data.error.message || "Groq error");
   return data.choices[0].message.content;
 }
 
@@ -2688,18 +2704,46 @@ async function callClaude(userPrompt, systemPrompt, key) {
     })
   });
   const data = await res.json();
+  if (data.error) throw new Error(data.error.message || "Claude error");
   return data.content[0].text;
 }
 
-async function callGemini(userPrompt, key) {
+async function callGemini(userPrompt, systemPrompt, key) {
   if (!key) throw new Error("Missing key");
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`, {
+  const combined = systemPrompt ? `${systemPrompt}\n\nUser Request: ${userPrompt}` : userPrompt;
+  
+  // Try Gemini 2.0 Flash first, then 1.5 Flash
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+  for (const model of models) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: combined }] }] })
+      });
+      const data = await res.json();
+      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      }
+    } catch (e) {}
+  }
+  throw new Error("Gemini generation failed on all candidate models");
+}
+
+async function callDeepSeek(userPrompt, systemPrompt, key) {
+  if (!key) throw new Error("Missing key");
+  const res = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: userPrompt }] }] })
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+      temperature: 0.1, max_tokens: 8000
+    })
   });
   const data = await res.json();
-  return data.candidates[0].content.parts[0].text;
+  if (data.error) throw new Error(data.error.message || "DeepSeek error");
+  return data.choices[0].message.content;
 }
 
 async function callKimi(userPrompt, systemPrompt, key) {
@@ -2714,6 +2758,7 @@ async function callKimi(userPrompt, systemPrompt, key) {
     })
   });
   const data = await res.json();
+  if (data.error) throw new Error(data.error.message || "Kimi error");
   return data.choices[0].message.content;
 }
 
