@@ -3108,7 +3108,7 @@ function extractDnaFromHtml(html, primaryPageKey = 'index') {
     }
 
     let scriptsHtml = "";
-    const scriptMatches = html.match(/<script[\s\S]*?<\/script>/gi) || [];
+    const scriptMatches = html.match(new RegExp('<script[\\s\\S]*?<\\/' + 'script>', 'gi')) || [];
     scriptsHtml = scriptMatches.join('\n');
 
     let masterBlogHtml = "";
@@ -3439,6 +3439,7 @@ if (previewFrame) {
         } catch (err) {}
     });
 }
+}
 
 // DEPLOYMENT TO GITHUB
 if (pushToGithubBtn) {
@@ -3486,7 +3487,8 @@ if (pushToGithubBtn) {
         pushToGithubBtn.classList.remove('opacity-40', 'cursor-not-allowed');
         pushToGithubBtn.textContent = "🚀 Publish Live to Web / GitHub Pages";
     }
-});
+  });
+}
 
 // EXPORT UTILITIES
 async function copyActivePageHtmlToClipboard(triggerBtn) {
@@ -3616,12 +3618,8 @@ if (retryBtn) {
         if (successCard) successCard.classList.add('hidden');
         if (progressBarFill) progressBarFill.style.width = `0%`;
         if (progressPercentageText) progressPercentageText.textContent = `0%`;
-    renderTabsControlMatrix();
-    if (canvasBadge) {
-        canvasBadge.textContent = "IDLE";
-        canvasBadge.className = "px-2 py-0.5 rounded text-[9px] bg-gray-800 text-gray-400";
-    }
-});
+    });
+}
 
 function logTerminal(message, tailwindColorClass) {
     if (!terminal) return;
