@@ -180,8 +180,8 @@
         <div id="mainLayoutGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start transition-all duration-300">
             
             <!-- LEFT COLUMN: Guided 3-Step Accordion + Advanced Options Drawer -->
-            <div id="inputPane" class="lg:col-span-4 space-y-3 transition-all duration-300">
-                <form id="genesisForm" class="space-y-3">
+            <div id="inputPane" class="lg:col-span-4 space-y-4 transition-all duration-300">
+                <form id="genesisForm" class="space-y-4">
 
                     <!-- STEP 1 ACCORDION: Get & Activate Your Key (OPEN BY DEFAULT) -->
                     <div class="bg-white dark:bg-brand-panel border-2 border-emerald-500/50 rounded-xl overflow-hidden shadow-lg transition-all">
@@ -195,9 +195,9 @@
                                 <span id="stepIcon_1" class="text-xs text-slate-400 dark:text-gray-500 font-mono">▼</span>
                             </div>
                         </button>
-                        <div id="stepContent_1" class="p-4 space-y-3 border-t border-slate-200 dark:border-gray-800/60">
+                        <div id="stepContent_1" class="p-4 space-y-3.5 border-t border-slate-200 dark:border-gray-800/60">
                             <p class="text-xs text-slate-600 dark:text-gray-300 leading-relaxed">
-                                Enter your email to instantly get a <strong>Free Trial Key</strong>, or paste your secret key below and click <strong>Activate Key</strong>!
+                                Enter your email to instantly get a <strong>Free Trial Key</strong>, or paste your key below and click <strong>Activate Key</strong>!
                             </p>
                             
                             <div class="flex gap-2">
@@ -218,16 +218,11 @@
 
                             <div class="flex items-center justify-between pt-1 text-xs">
                                 <button type="button" id="unlockPricingBtn" class="text-xs font-bold text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
-                                    🎁 Get Free Key / View Plans
+                                    🎁 Get Free Key / View Plans & Upgrade
                                 </button>
-                                <div class="flex items-center gap-3">
-                                    <button type="button" id="openPricingModalBtn" class="text-[10px] font-mono text-gray-400 hover:text-white cursor-pointer">
-                                        💳 Upgrade
-                                    </button>
-                                    <button type="button" id="openProjectsBtn" class="text-[10px] font-mono text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
-                                        📁 Saved Projects
-                                    </button>
-                                </div>
+                                <button type="button" id="openProjectsBtn" class="text-xs font-mono text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                    📁 Saved Projects
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -3448,46 +3443,55 @@ if (pushToGithubBtn) {
         pushToGithubBtn.classList.add('opacity-40', 'cursor-not-allowed');
         pushToGithubBtn.textContent = "⚡ Publishing live...";
         
-        logTerminal("Publishing live to GitHub Pages...", "white");
-    
-    try {
-        const intendedDomain = intendedDomainInput ? intendedDomainInput.value.trim() : '';
-        const personalRepo = personalGithubRepoInput ? personalGithubRepoInput.value.trim() : '';
-        const personalToken = personalGithubTokenInput ? personalGithubTokenInput.value.trim() : '';
+        logTerminal("Initiating automated deployment to GitHub Pages...", "white");
+        
+        try {
+            const companyTitle = (textarea && textarea.value) ? textarea.value.trim().substring(0, 30) : 'XSITE Website';
+            const intendedDomain = intendedDomainInput ? intendedDomainInput.value.trim() : '';
+            const personalRepo = personalGithubRepoInput ? personalGithubRepoInput.value.trim() : '';
+            const personalToken = personalGithubTokenInput ? personalGithubTokenInput.value.trim() : '';
 
-        const response = await fetch(`${BACKEND_WORKER_URL}/deploy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                companyName: textarea.value.substring(0, 30),
-                pages: sitePagesTree,
-                licenseKey: activeVerifiedKey,
-                intendedDomain: intendedDomain,
-                personalGithubRepo: personalRepo,
-                personalGithubToken: personalToken,
-                removeBranding: document.getElementById('removeBrandingToggle')?.checked || false
-            })
-        });
-        
-        const data = await response.json();
-        if (!data.success) throw new Error(data.error || "Deployment failed.");
-        
-        if (data.repoName) window.lastDeployedRepoName = data.repoName;
-        logTerminal("Production build files successfully written and provisioned.", "brand-glow");
-        document.getElementById('liveLink').href = data.liveUrl;
-        document.getElementById('repoLink').href = data.repoUrl;
-        
-        if (creditDisplay) creditDisplay.textContent = data.remainingCredits;
-        
-        if (successCard) successCard.classList.remove('hidden');
-        pushToGithubBtn.textContent = "🚢 Published Live!";
-    } catch (err) {
-        logTerminal(`Deployment Error: ${err.message}`, "red");
-        pushToGithubBtn.disabled = false;
-        pushToGithubBtn.classList.remove('opacity-40', 'cursor-not-allowed');
-        pushToGithubBtn.textContent = "🚀 Publish Live to Web / GitHub Pages";
-    }
-  });
+            const workerUrl = (typeof BACKEND_WORKER_URL !== 'undefined' && BACKEND_WORKER_URL) ? BACKEND_WORKER_URL : "https://xsites-backend-worker.xstreamflex.workers.dev";
+
+            const response = await fetch(`${workerUrl}/deploy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    companyName: companyTitle,
+                    pages: sitePagesTree || {},
+                    licenseKey: activeVerifiedKey || 'XSITE-DEV',
+                    intendedDomain: intendedDomain,
+                    personalGithubRepo: personalRepo,
+                    personalGithubToken: personalToken,
+                    removeBranding: document.getElementById('removeBrandingToggle')?.checked || false
+                })
+            });
+            
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error || "Deployment failed.");
+            
+            if (data.repoName) window.lastDeployedRepoName = data.repoName;
+            logTerminal("Production build files successfully written & committed.", "brand-glow");
+            logTerminal(`Live Web Endpoint: ${data.liveUrl}`, "brand-glow");
+            if (data.repoUrl) logTerminal(`GitHub Repo: ${data.repoUrl}`, "brand-glow");
+            
+            const liveLinkEl = document.getElementById('liveLink');
+            const repoLinkEl = document.getElementById('repoLink');
+            if (liveLinkEl) liveLinkEl.href = data.liveUrl;
+            if (repoLinkEl) repoLinkEl.href = data.repoUrl;
+            
+            if (creditDisplay && data.remainingCredits !== undefined) creditDisplay.textContent = data.remainingCredits;
+            
+            if (successCard) successCard.classList.remove('hidden');
+            pushToGithubBtn.textContent = "🚢 Published Live!";
+        } catch (err) {
+            logTerminal(`Deployment Notice: ${err.message}`, "red");
+            alert(`Deployment Notice: ${err.message}`);
+            pushToGithubBtn.disabled = false;
+            pushToGithubBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+            pushToGithubBtn.textContent = "🚀 Publish Live to Web / GitHub Pages";
+        }
+    });
 }
 
 // EXPORT UTILITIES
