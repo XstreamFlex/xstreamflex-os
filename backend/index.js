@@ -2014,19 +2014,21 @@ CRITICAL RULES:
           user = { key: 'XSITE-DEV', tierId: 'free', tier: TIERS.free, credits: 99 };
         }
         
-        let githubToken = env.GITHUB_TOKEN;
+        let githubToken = getSecret(env, 'GITHUB_TOKEN') || getSecret(env, 'GITHUB_PAT') || getSecret(env, 'GH_TOKEN');
         let username = "xstreamflex";
-        let repoName = (companyName || 'xsite').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50) || 'xsite-' + Date.now();
+        let repoName = (companyName || 'xsite').toLowerCase().replace(/[^a-z0-9_-]/g, '').substring(0, 50) || 'xsite-' + Date.now();
 
-        // Support Personal GitHub Repo & PAT if provided by user
-        if (personalGithubRepo && personalGithubRepo.includes('/')) {
-          const parts = personalGithubRepo.split('/');
-          username = parts[0].trim();
-          repoName = parts[1].trim();
-          if (personalGithubToken && personalGithubToken.trim()) {
-            githubToken = personalGithubToken.trim();
+        if (personalGithubRepo && personalGithubRepo.trim()) {
+          const rawRepo = personalGithubRepo.trim();
+          if (rawRepo.includes('/')) {
+            const parts = rawRepo.split('/');
+            username = parts[0].trim();
+            repoName = parts[1].trim();
+          } else {
+            repoName = rawRepo;
           }
-        } else if (personalGithubToken && personalGithubToken.trim()) {
+        }
+        if (personalGithubToken && personalGithubToken.trim()) {
           githubToken = personalGithubToken.trim();
         }
 
@@ -2303,9 +2305,10 @@ function cleanResponse(html) {
 async function uploadFileToGitHub(username, repoName, fileName, content, token) {
   const url = `https://api.github.com/repos/${username}/${repoName}/contents/${fileName}`;
   let sha = null;
+  const authHeader = (token.startsWith('github_pat_') || token.startsWith('ghp_') || token.length > 30) ? `Bearer ${token}` : `token ${token}`;
   
   try {
-    const check = await fetch(url, { headers: { 'Authorization': `token ${token}`, 'User-Agent': 'Cloudflare-Worker-XSITES' } });
+    const check = await fetch(url, { headers: { 'Authorization': authHeader, 'User-Agent': 'Cloudflare-Worker-XSITES' } });
     if (check.status === 200) {
       const fileData = await check.json();
       sha = fileData.sha;
@@ -2322,7 +2325,7 @@ async function uploadFileToGitHub(username, repoName, fileName, content, token) 
 
   const res = await fetch(url, {
     method: 'PUT',
-    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json', 'User-Agent': 'Cloudflare-Worker-XSITES' },
+    headers: { 'Authorization': authHeader, 'Content-Type': 'application/json', 'User-Agent': 'Cloudflare-Worker-XSITES' },
     body: JSON.stringify({
       message: `XSITES Engine Commit: ${fileName}`,
       content: base64Content,

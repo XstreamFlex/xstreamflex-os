@@ -3473,7 +3473,10 @@ if (pushToGithubBtn) {
             const companyTitle = (textarea && textarea.value) ? textarea.value.trim().substring(0, 30) : 'XSITE Website';
             const intendedDomain = intendedDomainInput ? intendedDomainInput.value.trim() : '';
             const personalRepo = personalGithubRepoInput ? personalGithubRepoInput.value.trim() : '';
-            const personalToken = personalGithubTokenInput ? personalGithubTokenInput.value.trim() : '';
+            const storedPat = localStorage.getItem('xsites_personal_pat') || '';
+            const personalToken = (personalGithubTokenInput && personalGithubTokenInput.value.trim()) 
+                ? personalGithubTokenInput.value.trim() 
+                : storedPat;
 
             const workerUrl = (typeof BACKEND_WORKER_URL !== 'undefined' && BACKEND_WORKER_URL) ? BACKEND_WORKER_URL : "https://xsites-backend-worker.xstreamflex.workers.dev";
 
