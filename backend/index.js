@@ -2215,11 +2215,16 @@ CRITICAL RULES:
 };
 
 async function callBestAI(userPrompt, systemPrompt, env) {
+  const groqKey = getSecret(env, 'GROQ_API_KEY');
+  const claudeKey = getSecret(env, 'CLAUDE_API_KEY');
+  const geminiKey = getSecret(env, 'GEMINI_API_KEY');
+  const kimiKey = getSecret(env, 'KIMI_API_KEY');
+
   const providers = [
-    { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, env.GROQ_API_KEY) },
-    { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, env.CLAUDE_API_KEY) },
-    { name: 'Gemini', func: () => callGemini(userPrompt, env.GEMINI_API_KEY) },
-    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, env.KIMI_API_KEY) }
+    { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, groqKey) },
+    { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, claudeKey) },
+    { name: 'Gemini', func: () => callGemini(userPrompt, geminiKey) },
+    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, kimiKey) }
   ];
 
   for (const provider of providers) {
@@ -2230,7 +2235,7 @@ async function callBestAI(userPrompt, systemPrompt, env) {
       console.warn(`Fallback Layer: ${provider.name} bypassed: ${e.message}`);
     }
   }
-  throw new Error("All backend fallback execution paths are currently exhausted.");
+  throw new Error("All backend fallback execution paths are currently exhausted. Please verify Worker secret API keys (GROQ_API_KEY, CLAUDE_API_KEY, GEMINI_API_KEY, KIMI_API_KEY).");
 }
 
 async function callGroq(userPrompt, systemPrompt, key) {
@@ -2292,7 +2297,7 @@ function cleanResponse(html) {
   html = html.replace(/```html\n?/gi, '').replace(/```\n?/g, '').trim();
   const start = html.toLowerCase().indexOf('<!doctype html>');
   if (start > 0) html = html.substring(start);
-  return html;
+  return sanitizeScriptDeclarations(html);
 }
 
 async function uploadFileToGitHub(username, repoName, fileName, content, token) {
@@ -2474,4 +2479,26 @@ function formatAssetDirectives(userAssets) {
   });
 
   return directives + "\n";
+}
+
+function getSecret(env, name) {
+  if (!env) return '';
+  return env[name] || env[name.toUpperCase()] || env[name.toLowerCase()] || '';
+}
+
+function sanitizeScriptDeclarations(html) {
+  if (!html || typeof html !== 'string') return html;
+
+  return html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (fullMatch, scriptContent) => {
+    if (!scriptContent || !scriptContent.trim()) return fullMatch;
+
+    const hasConstLet = /\b(const|let)\s+([a-zA-Z0-9_$]+)/g.test(scriptContent);
+    const trimmed = scriptContent.trim();
+    const isAlreadyIIFE = trimmed.startsWith('(function()') || trimmed.startsWith('(() =>') || trimmed.startsWith('(function ()');
+
+    if (hasConstLet && !isAlreadyIIFE) {
+      return `<script>\n(function() {\n${scriptContent}\n})();\n</script>`;
+    }
+    return fullMatch;
+  });
 }
