@@ -1747,6 +1747,23 @@ CRITICAL RULES:
           pageTypeContext = "💳 SPECIALIZED PAGE DIRECTIVE (PRICING & PLANS):\n- Build a high-converting Pricing & Plans page.\n- Include monthly/annual toggle switch, multi-tier pricing cards with feature checkmarks, popular badge, and guarantee banner.\n\n";
         } else if (cleanType.includes("portfolio") || cleanType.includes("project") || cleanType.includes("case")) {
           pageTypeContext = "🖼️ SPECIALIZED PAGE DIRECTIVE (PORTFOLIO & CASE STUDIES):\n- Build a visual showcase layout with filterable project gallery cards, client metrics, preview modals/links, and project inquiry CTA.\n\n";
+        } else if (cleanType === 'contact') {
+          pageTypeContext = "✉️ SPECIALIZED PAGE DIRECTIVE (CONTACT & INQUIRY PORTAL):\n" +
+                            "- Build a high-converting Contact Us & Inquiry page.\n" +
+                            "- Include interactive Contact Form wired with action=\"https://xsites-backend-worker.xstreamflex.workers.dev/api/xmail/ingest\" or XMAIL automated submission handler.\n" +
+                            "- Include company address, support email, phone number, working hours badge, interactive location map container, and social media handles.\n\n";
+        } else if (cleanType === 'about') {
+          pageTypeContext = "🏢 SPECIALIZED PAGE DIRECTIVE (ABOUT US & BRAND STORY):\n" +
+                            "- Build a compelling About Us & Company Story page.\n" +
+                            "- Include hero brand story, core mission statements, core values Bento Grid, leadership team section, company achievements, and call to action.\n\n";
+        } else if (cleanType === 'privacy') {
+          pageTypeContext = "⚖️ SPECIALIZED PAGE DIRECTIVE (PRIVACY POLICY & DATA PROTECTION):\n" +
+                            "- Build a complete, legally compliant Privacy Policy document.\n" +
+                            "- Include sections for Data Collection, How Information Is Used, Cookie Usage, Data Security, User Rights, Third-Party Processing, and Contact Info.\n\n";
+        } else if (cleanType === 'terms') {
+          pageTypeContext = "⚖️ SPECIALIZED PAGE DIRECTIVE (TERMS OF SERVICE & GUARANTEE):\n" +
+                            "- Build a complete, legally compliant Terms of Service & Terms of Use document.\n" +
+                            "- Include Agreement Terms, Acceptable Use, Payment Terms, Digital Product Delivery & Refunds, Intellectual Property, Limitation of Liability, and Support Contact.\n\n";
         } else {
           pageTypeContext = `🎯 SPECIALIZED PAGE DIRECTIVE (${cleanType.toUpperCase()}):\n- Analyze the page name "${pageType}" and company concept, then craft a dedicated, feature-rich, high-converting layout specifically tailored for "${pageType}".\n\n`;
         }

@@ -326,6 +326,16 @@
                                                 </select>
                                             </div>
                                         </div>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-emerald-300 mb-1">7. Digital Product / Receipt Delivery URL</label>
+                                                <input type="text" id="assist_digital_fulfillment" placeholder="e.g. https://xstreamflex.com/download/pdf" class="w-full bg-black/60 border border-gray-700 text-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-emerald-300 mb-1">8. Social Account Handles / Links</label>
+                                                <input type="text" id="assist_social_links" placeholder="e.g. @mybrand (x.com/mybrand, instagram.com/mybrand)" class="w-full bg-black/60 border border-gray-700 text-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-emerald-400" />
+                                            </div>
+                                        </div>
                                         <button type="button" onclick="applyBraindumpAssist()" class="w-full bg-gradient-to-r from-emerald-500 to-sky-500 hover:opacity-90 text-black font-extrabold text-xs py-2 rounded-lg font-mono transition-all uppercase tracking-wider cursor-pointer shadow">
                                             ✨ Insert Answers into Braindump
                                         </button>
@@ -1696,12 +1706,16 @@ window.applyBraindumpAssist = function() {
   const leadMagnet = document.getElementById('assist_lead_magnet')?.value.trim() || '';
   const payments = document.getElementById('assist_payments')?.value || 'stripe';
   const vibe = document.getElementById('assist_vibe')?.value || 'modern_warm';
+  const fulfillment = document.getElementById('assist_digital_fulfillment')?.value.trim() || '';
+  const social = document.getElementById('assist_social_links')?.value.trim() || '';
 
   let compiled = [];
   if (bizName) compiled.push(`Business Name & Tagline: ${bizName}`);
   if (audience) compiled.push(`Target Audience & Core Value: ${audience}`);
   if (offers) compiled.push(`Products/Services Offered: ${offers}`);
-  if (leadMagnet) compiled.push(`XMAIL Free Offer / Lead Magnet: ${leadMagnet}`);
+  if (leadMagnet) compiled.push(`XMAIL Free Lead Magnet Offer: ${leadMagnet}. Automatically attach XMAIL 3-step welcome email autoresponder sequence.`);
+  if (fulfillment) compiled.push(`Digital Order Delivery URL: ${fulfillment}. Integrate automated order confirmation modal/redirect on purchase.`);
+  if (social) compiled.push(`Social Accounts: ${social}. Connect all social icons in header and footer.`);
   
   if (payments === 'stripe') compiled.push(`Payments: Integrate Stripe Checkout buttons & pricing tables.`);
   else if (payments === 'paypal') compiled.push(`Payments: Integrate PayPal Buy Now buttons & link.`);
