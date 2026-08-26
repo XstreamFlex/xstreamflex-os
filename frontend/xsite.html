@@ -220,9 +220,14 @@
                                 <button type="button" id="unlockPricingBtn" class="text-xs font-bold text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
                                     🎁 Get Free Key / View Plans & Upgrade
                                 </button>
-                                <button type="button" id="openProjectsBtn" class="text-xs font-mono text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
-                                    📁 Saved Projects
-                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" onclick="pullProjectFromGithub()" class="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer" title="Load an existing project from GitHub">
+                                        📥 Load from GitHub
+                                    </button>
+                                    <button type="button" id="openProjectsBtn" class="text-xs font-mono text-sky-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                        📁 Saved Projects
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -952,9 +957,14 @@
                         <div id="deploymentModule" class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <h3 class="text-xs font-bold text-white">Save or Publish Your Website</h3>
-                                <button id="saveProjectBtn" type="button" class="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer">
-                                    💾 Save Project
-                                </button>
+                                 <div class="flex items-center gap-3">
+                                     <button type="button" onclick="pullProjectFromGithub()" class="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                         📥 Load from GitHub
+                                     </button>
+                                     <button id="saveProjectBtn" type="button" class="text-xs font-mono text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                         💾 Save Project
+                                     </button>
+                                 </div>
                             </div>
 
                             <button 
@@ -5313,11 +5323,93 @@ function logTerminal(message, tailwindColorClass) {
     });
   }
 
+  const handleAutoPull = () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pullRepo = urlParams.get('pullRepo');
+      if (pullRepo) {
+        const storedPat = localStorage.getItem('xsites_personal_pat') || '';
+        setTimeout(() => {
+          if (typeof window.pullProjectFromGithub === 'function') {
+            window.pullProjectFromGithub(pullRepo, storedPat);
+          }
+        }, 500);
+      }
+    } catch (e) {}
+  };
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupXsitesEditEngine);
+    document.addEventListener('DOMContentLoaded', () => {
+      setupXsitesEditEngine();
+      handleAutoPull();
+    });
   } else {
     setupXsitesEditEngine();
+    handleAutoPull();
   }
+
+  window.pullProjectFromGithub = async function(repoInput, tokenInput) {
+    const repoName = repoInput || prompt("Enter GitHub Repository name to load (e.g. 'xsite-mybrand' or 'username/xsite-mybrand'):", window.lastDeployedRepoName || "") || "";
+    if (!repoName.trim()) return;
+
+    if (typeof logTerminal === 'function') {
+      logTerminal(`Pulling project from GitHub repo '${repoName.trim()}'...`, "white");
+    }
+
+    try {
+      const personalRepoInput = document.getElementById('personalGithubRepo');
+      const personalTokenInput = document.getElementById('personalGithubToken');
+      const personalToken = tokenInput || (personalTokenInput ? personalTokenInput.value.trim() : "");
+
+      const workerUrl = (typeof BACKEND_WORKER_URL !== 'undefined' && BACKEND_WORKER_URL) ? BACKEND_WORKER_URL : "https://xsites-backend-worker.xstreamflex.workers.dev";
+
+      const res = await fetch(`${workerUrl}/repo/pull`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repoName: repoName.trim(),
+          personalGithubToken: personalToken
+        })
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to pull project from GitHub.");
+
+      if (!data.pages || Object.keys(data.pages).length === 0) {
+        throw new Error("No HTML page files were retrieved from this repository.");
+      }
+
+      // Revoke existing blob URLs
+      if (typeof currentBlobUrls !== 'undefined') {
+        Object.values(currentBlobUrls).forEach(url => URL.revokeObjectURL(url));
+        currentBlobUrls = {};
+      }
+
+      // Hydrate sitePagesTree with pulled pages
+      sitePagesTree = data.pages;
+      currentLaunchArchitecture = Object.keys(sitePagesTree);
+
+      if (typeof renderTabsControlMatrix === 'function') {
+        renderTabsControlMatrix();
+      }
+
+      // Switch active tab to index or first loaded page
+      const primaryPage = sitePagesTree.index ? 'index' : Object.keys(sitePagesTree)[0];
+      if (typeof switchActivePreviewTab === 'function') {
+        switchActivePreviewTab(primaryPage);
+      }
+
+      if (typeof logTerminal === 'function') {
+        logTerminal(`🎉 Successfully pulled ${Object.keys(sitePagesTree).length} page(s) from GitHub repo '${data.repoName}'!`, "brand-glow");
+      }
+      alert(`🎉 Project Loaded from GitHub!\n\n${Object.keys(sitePagesTree).length} page(s) loaded into XSITES Studio.\nYou can now inspect & edit in 'The Pearl' Visual Editor or publish changes back to GitHub anytime.`);
+    } catch (err) {
+      if (typeof logTerminal === 'function') {
+        logTerminal(`GitHub Pull Notice: ${err.message}`, "red");
+      }
+      alert(`GitHub Pull Notice: ${err.message}`);
+    }
+  };
 
   window.getXsitesExportableHTML = function() {
     const activeDoc = getActiveIframeDocument();

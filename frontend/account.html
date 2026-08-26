@@ -196,9 +196,52 @@
                         <div class="text-[11px] text-slate-500 dark:text-gray-400">10 tokens: $4.99 ($2.50 LTD)</div>
                         <div class="text-[11px] text-slate-500 dark:text-gray-400">20 tokens: $8.99 ($4.50 LTD)</div>
                         <div class="text-[11px] text-slate-500 dark:text-gray-400">50 tokens: $19.99 ($10 LTD)</div>
-                        <div class="text-[11px] text-slate-500 dark:text-gray-400">100 tokens: $34.99 ($17.50 LTD)</div>
+            <!-- GITHUB WORKSPACE PERSISTENCE ENGINE & SAVED PROJECTS HUB -->
+            <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 dark:border-gray-800 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>📦 GitHub Projects & Workspace Persistence Engine</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-gray-400">Pull existing website repositories into XSITES Studio to edit, or manage saved project trees.</p>
+                    </div>
+                    <span class="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold uppercase">
+                        🟢 GitHub Pull/Push Sync Active
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Pull Repo Input Card -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3">
+                        <label for="accountRepoInput" class="block text-xs font-bold text-slate-800 dark:text-gray-200">
+                            📥 Load Existing GitHub Repository
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="accountRepoInput" placeholder="e.g. xsite-mybrand or username/repo" class="flex-1 bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 dark:text-emerald-400 focus:outline-none focus:border-emerald-400">
+                            <button type="button" onclick="loadAccountGithubRepo()" class="bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs px-4 rounded-lg font-mono shadow transition cursor-pointer shrink-0">
+                                Load Project
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-gray-500">Fetches all pages from GitHub into XSITES Studio for live visual inspection and editing.</p>
+                    </div>
+
+                    <!-- Personal PAT Input Card -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3">
+                        <label for="accountPatInput" class="block text-xs font-bold text-slate-800 dark:text-gray-200">
+                            🔑 Personal GitHub Token (PAT)
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="password" id="accountPatInput" placeholder="ghp_..." class="flex-1 bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 dark:text-amber-400 focus:outline-none focus:border-amber-400">
+                            <button type="button" onclick="saveAccountGithubPat()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 rounded-lg font-mono transition cursor-pointer shrink-0">
+                                Save Token
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-gray-500">Required if deploying to or pulling from your private GitHub repositories.</p>
                     </div>
                 </div>
+
+                <!-- Projects List Container -->
+                <div id="accountProjectsList" class="space-y-2 pt-2"></div>
             </div>
         </div>
 
@@ -552,7 +595,41 @@
                     UnifiedAuth.logout();
                 });
             }
+
+            // Hydrate PAT input from storage if present
+            const patInput = document.getElementById('accountPatInput');
+            if (patInput) {
+                const storedPat = localStorage.getItem('xsites_personal_pat') || '';
+                if (storedPat) patInput.value = storedPat;
+            }
         });
+
+        function loadAccountGithubRepo() {
+            const repoInput = document.getElementById('accountRepoInput');
+            const patInput = document.getElementById('accountPatInput');
+            const repoName = repoInput ? repoInput.value.trim() : '';
+            const pat = patInput ? patInput.value.trim() : '';
+            if (!repoName) {
+                alert("Please enter a GitHub repository name.");
+                return;
+            }
+            if (pat) {
+                localStorage.setItem('xsites_personal_pat', pat);
+            }
+            window.location.href = `xsite.html?pullRepo=${encodeURIComponent(repoName)}`;
+        }
+
+        function saveAccountGithubPat() {
+            const patInput = document.getElementById('accountPatInput');
+            const pat = patInput ? patInput.value.trim() : '';
+            if (pat) {
+                localStorage.setItem('xsites_personal_pat', pat);
+                alert("🔑 Personal GitHub Access Token saved securely.");
+            } else {
+                localStorage.removeItem('xsites_personal_pat');
+                alert("🔑 Token cleared.");
+            }
+        }
     </script>
     <script type="text/javascript" data-cfasync="false" src="https://humanchat.net/build/js/hb_latest.js?v=1.5.28" crossorigin="anonymous"></script>
     <script>

@@ -2086,6 +2086,108 @@ CRITICAL RULES:
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
+    // ENDPOINT 9: GITHUB REPO PULL & PROJECT HYDRATION ENGINE
+    if ((url.pathname === "/repo/pull" || url.pathname === "/repo/sync") && (request.method === "POST" || request.method === "GET")) {
+      try {
+        let repoName = "";
+        let username = "xstreamflex";
+        let personalToken = "";
+
+        if (request.method === "POST") {
+          const body = await request.json().catch(() => ({}));
+          repoName = body.repoName || body.personalGithubRepo || "";
+          personalToken = body.personalGithubToken || "";
+        } else {
+          repoName = url.searchParams.get("repoName") || "";
+          personalToken = url.searchParams.get("token") || "";
+        }
+
+        if (repoName.includes('/')) {
+          const parts = repoName.split('/');
+          username = parts[0].trim();
+          repoName = parts[1].trim();
+        }
+
+        const githubToken = personalToken || getSecret(env, 'GITHUB_TOKEN');
+        if (!githubToken) {
+          throw new Error("GitHub token unassigned. Please enter your Personal Access Token in XSITE or configure Worker GITHUB_TOKEN.");
+        }
+        if (!repoName) {
+          throw new Error("Missing repository name parameter (e.g. 'xsite-mybrand' or 'username/xsite-mybrand').");
+        }
+
+        // Fetch repository tree using GitHub REST API
+        let filesList = [];
+        const treeRes = await fetch(`https://api.github.com/repos/${username}/${repoName}/git/trees/main?recursive=1`, {
+          headers: {
+            'Authorization': `token ${githubToken}`,
+            'User-Agent': 'Cloudflare-Worker-XSITES',
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (treeRes.ok) {
+          const treeData = await treeRes.json();
+          filesList = (treeData.tree || []).filter(item => item.type === 'blob' && item.path.endsWith('.html'));
+        } else {
+          const contentsRes = await fetch(`https://api.github.com/repos/${username}/${repoName}/contents`, {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'User-Agent': 'Cloudflare-Worker-XSITES',
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          if (!contentsRes.ok) {
+            const errData = await contentsRes.json().catch(() => ({ message: contentsRes.statusText }));
+            throw new Error(`Failed to load repository '${username}/${repoName}': ${errData.message || contentsRes.statusText}`);
+          }
+          const rawItems = await contentsRes.json();
+          filesList = (Array.isArray(rawItems) ? rawItems : []).filter(item => item.type === 'file' && item.name.endsWith('.html')).map(item => ({ path: item.name }));
+        }
+
+        if (filesList.length === 0) {
+          throw new Error(`No .html files found in repository '${username}/${repoName}'.`);
+        }
+
+        const pagesMap = {};
+        for (const fileObj of filesList) {
+          const rawPath = fileObj.path;
+          const pageKey = rawPath.replace(/\.html$/, '').replace(/^.*\//, '');
+          const fileRes = await fetch(`https://api.github.com/repos/${username}/${repoName}/contents/${rawPath}`, {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'User-Agent': 'Cloudflare-Worker-XSITES',
+              'Accept': 'application/vnd.github.v3.raw'
+            }
+          });
+
+          if (fileRes.ok) {
+            const htmlContent = await fileRes.text();
+            pagesMap[pageKey] = htmlContent;
+          }
+        }
+
+        const liveEndpoint = `https://${username}.github.io/${repoName}/index.html`;
+
+        return new Response(JSON.stringify({
+          success: true,
+          repoName: repoName,
+          username: username,
+          repoUrl: `https://github.com/${username}/${repoName}`,
+          liveUrl: liveEndpoint,
+          pages: pagesMap,
+          pageCount: Object.keys(pagesMap).length
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+
+      } catch (err) {
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
     }
 
     return new Response(JSON.stringify({ success: true, message: "XSITES Engine API Active" }), {
