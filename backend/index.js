@@ -1,10 +1,3 @@
-import { CryptoVault } from "./crypto-vault.js";
-import { BUILTIN_KEYS } from "./config.secrets.js";
-
-function getSecret(env, keyName) {
-  return (env && env[keyName]) || (BUILTIN_KEYS && BUILTIN_KEYS[keyName]) || "";
-}
-
 export default {
   async fetch(request, env, ctx) {
     const corsHeaders = {
@@ -15,322 +8,6 @@ export default {
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
-    }
-
-    const url = new URL(request.url);
-
-    // UNIFIED AUTH: REGISTER
-    if (url.pathname === "/auth/register" && request.method === "POST") {
-      try {
-        const { email, password, name } = await request.json();
-        if (!email || !password) {
-          return new Response(JSON.stringify({ success: false, error: "Email and password are required." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-        const cleanEmail = email.toLowerCase().trim();
-        const userKey = `user:${cleanEmail}`;
-
-        let existing = null;
-        if (env.XSITES_KEYS) {
-          existing = await env.XSITES_KEYS.get(userKey, "json");
-        }
-
-        if (existing) {
-          return new Response(JSON.stringify({ success: false, error: "An account with this email already exists. Please log in." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        const { hash, salt } = await CryptoVault.hashPassword(password);
-        const userId = `usr_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`;
-        
-        const isAdminUser = (cleanEmail === 'admin@xstreamflex.com');
-        let tierId = isAdminUser ? 'master' : 'free';
-        let credits = isAdminUser ? 99999 : 3;
-
-        const userRecord = {
-          userId,
-          email: cleanEmail,
-          name: name || cleanEmail.split('@')[0],
-          passwordHash: hash,
-          salt,
-          tierId,
-          credits,
-          isAdmin: isAdminUser,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-
-        if (env.XSITES_KEYS) {
-          await env.XSITES_KEYS.put(userKey, JSON.stringify(userRecord));
-          await env.XSITES_KEYS.put(`id:${userId}`, JSON.stringify(userRecord));
-        }
-
-        const jwtSecret = env.JWT_SECRET || "xstreamflex_secret_jwt_key_2026";
-        const token = await CryptoVault.signJWT({ sub: userId, email: cleanEmail, name: userRecord.name, tierId, isAdmin: isAdminUser }, jwtSecret);
-
-        return new Response(JSON.stringify({
-          success: true,
-          token,
-          user: { userId, email: cleanEmail, name: userRecord.name, tierId, credits, isAdmin: isAdminUser }
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // UNIFIED AUTH: LOGIN
-    if (url.pathname === "/auth/login" && request.method === "POST") {
-      try {
-        const { email, password } = await request.json();
-        if (!email || !password) {
-          return new Response(JSON.stringify({ success: false, error: "Email and password are required." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-        const cleanEmail = email.toLowerCase().trim();
-        const userKey = `user:${cleanEmail}`;
-
-        let userRecord = null;
-        if (env.XSITES_KEYS) {
-          userRecord = await env.XSITES_KEYS.get(userKey, "json");
-        }
-
-        if (!userRecord) {
-          return new Response(JSON.stringify({ success: false, error: "Account not found. Please register." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        const isValid = await CryptoVault.verifyPassword(password, userRecord.passwordHash, userRecord.salt);
-        if (!isValid) {
-          return new Response(JSON.stringify({ success: false, error: "Invalid email or password." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        const isAdminUser = (cleanEmail === 'admin@xstreamflex.com') || Boolean(userRecord.isAdmin);
-        if (cleanEmail === 'admin@xstreamflex.com') {
-          userRecord.tierId = 'master';
-          userRecord.credits = 99999;
-          userRecord.isAdmin = true;
-        }
-
-        const jwtSecret = env.JWT_SECRET || "xstreamflex_secret_jwt_key_2026";
-        const token = await CryptoVault.signJWT({
-          sub: userRecord.userId,
-          email: userRecord.email,
-          name: userRecord.name,
-          tierId: userRecord.tierId,
-          isAdmin: isAdminUser
-        }, jwtSecret);
-
-        return new Response(JSON.stringify({
-          success: true,
-          token,
-          user: {
-            userId: userRecord.userId,
-            email: userRecord.email,
-            name: userRecord.name,
-            tierId: userRecord.tierId,
-            credits: userRecord.credits || 3,
-            isAdmin: isAdminUser
-          }
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // UNIFIED AUTH: VERIFY TOKEN
-    if (url.pathname === "/auth/verify" && request.method === "GET") {
-      try {
-        const authHeader = request.headers.get("Authorization") || "";
-        const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-        const jwtSecret = env.JWT_SECRET || "xstreamflex_secret_jwt_key_2026";
-        const payload = await CryptoVault.verifyJWT(token, jwtSecret);
-
-        if (!payload) {
-          return new Response(JSON.stringify({ success: false, error: "Invalid or expired session token." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        const isAdminUser = (payload.email === 'admin@xstreamflex.com') || Boolean(payload.isAdmin);
-        return new Response(JSON.stringify({
-          success: true,
-          user: { ...payload, isAdmin: isAdminUser }
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // BI-DIRECTIONAL PRODUCT SYNC (XSITE ↔ XMAIL)
-    if (url.pathname === "/api/xmail/products/sync" && request.method === "POST") {
-      try {
-        const { userEmail, products } = await request.json();
-        const cleanEmail = (userEmail || 'guest@xstreamflex.com').toLowerCase().trim();
-        const storeKey = `xmail_products:${cleanEmail}`;
-
-        let existingProducts = [];
-        if (env.XSITES_KEYS) {
-          existingProducts = await env.XSITES_KEYS.get(storeKey, "json") || [];
-        }
-
-        const mergedMap = new Map();
-        [...existingProducts, ...(products || [])].forEach(p => {
-          if (p && (p.id || p.title)) {
-            const key = p.id || p.title.toLowerCase().replace(/[^a-z0-9]/g, '-');
-            mergedMap.set(key, { ...p, id: key });
-          }
-        });
-
-        const syncedProducts = Array.from(mergedMap.values());
-        if (env.XSITES_KEYS) {
-          await env.XSITES_KEYS.put(storeKey, JSON.stringify(syncedProducts));
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          syncedProducts,
-          count: syncedProducts.length,
-          updatedAt: new Date().toISOString()
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // AI ORDER CONFIRMATION SPAWNER
-    if (url.pathname === "/api/xmail/order-confirmation/spawn" && request.method === "POST") {
-      try {
-        const { userEmail, product } = await request.json();
-        if (!product || !product.title) {
-          return new Response(JSON.stringify({ success: false, error: "Product payload is required." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        const cleanEmail = (userEmail || 'guest@xstreamflex.com').toLowerCase().trim();
-        const confirmationTemplate = {
-          id: `order-conf-${Date.now()}`,
-          productId: product.id || product.title,
-          productTitle: product.title,
-          price: product.price || '$0.00',
-          subject: `⚡ Order Confirmation: ${product.title}`,
-          htmlTemplate: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #0f172a; color: #f8fafc;">
-              <h2 style="color: #10b981;">Order Confirmed! 🎉</h2>
-              <p>Thank you for purchasing <strong>${product.title}</strong>.</p>
-              <div style="background-color: #1e293b; padding: 16px; border-radius: 12px; margin: 20px 0;">
-                <p style="margin: 0; font-size: 14px; color: #94a3b8;">Item: <strong style="color: #ffffff;">${product.title}</strong></p>
-                <p style="margin: 4px 0 0 0; font-size: 18px; color: #38bdf8; font-weight: bold;">Amount Paid: ${product.price || '$0.00'}</p>
-              </div>
-              <p style="font-size: 13px; color: #cbd5e1;">Your digital download / access details have been activated for ${cleanEmail}.</p>
-              <a href="#" style="display: inline-block; background-color: #10b981; color: #000000; font-weight: bold; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 12px;">Access Product &rarr;</a>
-            </div>
-          `,
-          createdAt: new Date().toISOString()
-        };
-
-        if (env.XSITES_KEYS) {
-          const queueKey = `xmail_autoresponders:${cleanEmail}`;
-          let queue = await env.XSITES_KEYS.get(queueKey, "json") || [];
-          queue.unshift(confirmationTemplate);
-          await env.XSITES_KEYS.put(queueKey, JSON.stringify(queue));
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          confirmationTemplate,
-          status: "active"
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // AI NEWSLETTER WELCOME CAMPAIGN GENERATOR
-    if (url.pathname === "/api/xmail/welcome-campaign/setup" && request.method === "POST") {
-      try {
-        const { userEmail, brandName, leadMagnetUrl } = await request.json();
-        const cleanEmail = (userEmail || 'guest@xstreamflex.com').toLowerCase().trim();
-        const brand = brandName || 'XSITES Brand';
-
-        const campaign = {
-          id: `welcome-campaign-${Date.now()}`,
-          brandName: brand,
-          name: `3-Step AI Welcome Sequence for ${brand}`,
-          emails: [
-            {
-              step: 1,
-              delayHours: 0,
-              subject: `🎉 Welcome to ${brand}! Here is your free gift`,
-              body: `Hi there!\n\nThank you for subscribing to ${brand}. We are thrilled to have you here.\n\nClick below to access your exclusive welcome resource:\n${leadMagnetUrl || 'https://xstreamflex.com/welcome-access'}\n\nStay tuned for exclusive updates!`
-            },
-            {
-              step: 2,
-              delayHours: 48,
-              subject: `Behind the scenes at ${brand} & our top tools`,
-              body: `Hey!\n\nHere is a quick story on why we built ${brand} and how our digital suite can help you scale.`
-            },
-            {
-              step: 3,
-              delayHours: 120,
-              subject: `Special VIP Discount inside for ${brand}`,
-              body: `As a valued subscriber of ${brand}, here is a 15% VIP discount code on your first product purchase: VIP15.`
-            }
-          ],
-          createdAt: new Date().toISOString()
-        };
-
-        if (env.XSITES_KEYS) {
-          const campaignKey = `xmail_campaigns:${cleanEmail}`;
-          let campaigns = await env.XSITES_KEYS.get(campaignKey, "json") || [];
-          campaigns.unshift(campaign);
-          await env.XSITES_KEYS.put(campaignKey, JSON.stringify(campaigns));
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          campaign,
-          status: "deployed"
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // UNIFIED AUTH: SYNC CREDITS & STATUS
-    if (url.pathname === "/auth/sync-credits" && (request.method === "GET" || request.method === "POST")) {
-      try {
-        const authHeader = request.headers.get("Authorization") || "";
-        const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-        const jwtSecret = env.JWT_SECRET || "xstreamflex_secret_jwt_key_2026";
-        const payload = await CryptoVault.verifyJWT(token, jwtSecret);
-
-        if (!payload) {
-          return new Response(JSON.stringify({ success: false, error: "Authentication required to sync credits." }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-
-        const userKey = `user:${payload.email}`;
-        let userRecord = env.XSITES_KEYS ? await env.XSITES_KEYS.get(userKey, "json") : null;
-        if (!userRecord) {
-          userRecord = { userId: payload.sub, email: payload.email, name: payload.name, tierId: payload.tierId || 'free', credits: 3 };
-        }
-
-        if (payload.email === 'admin@xstreamflex.com') {
-          userRecord.tierId = 'master';
-          userRecord.credits = 99999;
-          userRecord.isAdmin = true;
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          user: {
-            userId: userRecord.userId,
-            email: userRecord.email,
-            name: userRecord.name,
-            tierId: userRecord.tierId,
-            credits: userRecord.credits ?? 3,
-            isAdmin: Boolean(userRecord.isAdmin || payload.email === 'admin@xstreamflex.com')
-          }
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
     }
 
     if (request.method === "GET" && new URL(request.url).pathname === "/xsite-inspector.js") {
@@ -345,7 +22,6 @@ export default {
         isInspecting: true
     };
 
-    // Helper: Push state to undo stack
     function pushUndoState() {
         if (typeof window.getCurrentPageHtmlContent === 'function') {
             const html = window.getCurrentPageHtmlContent();
@@ -365,7 +41,6 @@ export default {
         if (redoBtn) redoBtn.disabled = InspectorState.redoStack.length === 0;
     }
 
-    // Attach hover & click listeners to iframe
     function setupIframeInspector(iframe) {
         if (!iframe) return;
         InspectorState.iframeEl = iframe;
@@ -375,7 +50,6 @@ export default {
                 const doc = iframe.contentDocument || iframe.contentWindow?.document;
                 if (!doc || !doc.body) return;
 
-                // Inject highlight styles
                 if (!doc.getElementById('xsiteInspectorStyles')) {
                     const style = doc.createElement('style');
                     style.id = 'xsiteInspectorStyles';
@@ -414,7 +88,6 @@ export default {
                     e.preventDefault();
                     e.stopPropagation();
 
-                    // Clear previous selection
                     doc.querySelectorAll('.xsite-selected-target').forEach(el => {
                         el.classList.remove('xsite-selected-target');
                     });
@@ -435,23 +108,6 @@ export default {
         attachDocListeners();
     }
 
-    function rgbToHex(rgbStr) {
-        if (!rgbStr) return '#ffffff';
-        if (rgbStr.startsWith('#')) {
-            if (rgbStr.length === 4) {
-                return '#' + rgbStr[1] + rgbStr[1] + rgbStr[2] + rgbStr[2] + rgbStr[3] + rgbStr[3];
-            }
-            return rgbStr.slice(0, 7);
-        }
-        const matches = rgbStr.match(/\\d+/g);
-        if (!matches || matches.length < 3) return '#ffffff';
-        const r = parseInt(matches[0], 10).toString(16).padStart(2, '0');
-        const g = parseInt(matches[1], 10).toString(16).padStart(2, '0');
-        const b = parseInt(matches[2], 10).toString(16).padStart(2, '0');
-        return \`#\${r}\${g}\${b}\`;
-    }
-
-    // Helper: Identify closest meaningful editable component
     function getEditableTarget(el) {
         if (!el) return null;
         const interactive = el.closest('button, a, img, h1, h2, h3, h4, h5, h6, p, li');
@@ -463,11 +119,7 @@ export default {
         return el;
     }
 
-    // Render Inspector UI under preview window
     function renderVariableInspector(targetEl) {
-        if (!targetEl) return;
-        InspectorState.activeSelectedEl = targetEl;
-
         const placeholder = document.getElementById('inspectorPlaceholder');
         const formContainer = document.getElementById('inspectorFormContainer');
         const badgeLabel = document.getElementById('inspectorTagLabel');
@@ -494,25 +146,22 @@ export default {
         if (!formContainer) return;
         formContainer.innerHTML = '';
 
-        // Form Fields Container
         const grid = document.createElement('div');
         grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono';
 
-        // 1. CONTENT VARIABLES (Text, Link, Image Src/Alt)
         const contentBox = document.createElement('div');
         contentBox.className = 'bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-3';
         contentBox.innerHTML = \`<h4 class="text-emerald-400 font-bold border-b border-slate-800 pb-1.5 flex items-center gap-1">📝 Content & Text Variables</h4>\`;
 
         let hasContentVar = false;
 
-        // Editable Text / Headline
         if (['h1','h2','h3','h4','h5','h6','p','span','button','a','li','label'].includes(tagName) || targetEl.children.length === 0) {
             hasContentVar = true;
             const textGroup = document.createElement('div');
             textGroup.className = 'space-y-1';
             textGroup.innerHTML = \`
                 <label class="block text-[10px] text-slate-400 font-bold uppercase">Text / Headline Content</label>
-                <textarea rows="2" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg p-2 text-xs focus:outline-none focus:border-emerald-500">\${targetEl.innerText ? targetEl.innerText.trim() : (targetEl.textContent ? targetEl.textContent.trim() : '')}</textarea>
+                <textarea rows="2" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg p-2 text-xs focus:outline-none focus:border-emerald-500">\${targetEl.innerText.trim()}</textarea>
             \`;
             const textarea = textGroup.querySelector('textarea');
             textarea.addEventListener('input', (e) => {
@@ -523,7 +172,6 @@ export default {
             contentBox.appendChild(textGroup);
         }
 
-        // Editable Link URL (href)
         const anchor = tagName === 'a' ? targetEl : targetEl.querySelector('a');
         if (anchor || tagName === 'button') {
             hasContentVar = true;
@@ -544,7 +192,6 @@ export default {
             contentBox.appendChild(linkGroup);
         }
 
-        // Editable Image Src & Alt
         const img = tagName === 'img' ? targetEl : targetEl.querySelector('img');
         if (img) {
             hasContentVar = true;
@@ -578,45 +225,22 @@ export default {
         if (!hasContentVar) {
             const info = document.createElement('p');
             info.className = 'text-[11px] text-slate-400 italic';
-            info.innerText = 'Section container selected. View and edit child section variables or style controls below.';
+            info.innerText = 'Container section selected. Use child variables or style controls below.';
             contentBox.appendChild(info);
         }
         grid.appendChild(contentBox);
 
-        // 2. STYLE & TYPOGRAPHY VARIABLES
         const styleBox = document.createElement('div');
         styleBox.className = 'bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-3';
         styleBox.innerHTML = \`<h4 class="text-sky-400 font-bold border-b border-slate-800 pb-1.5 flex items-center gap-1">🎨 Style & Typography Variables</h4>\`;
 
-        // Retrieve current computed styles
-        let curTextColor = "#ffffff";
-        let curBgColor = "#090a0f";
-        let curFontSize = "";
-        let curFontWeight = "";
-        let curTextAlign = "";
-
-        try {
-            const win = targetEl.ownerDocument?.defaultView || window;
-            const comp = win.getComputedStyle(targetEl);
-            if (comp) {
-                if (comp.color) curTextColor = rgbToHex(comp.color);
-                if (comp.backgroundColor && comp.backgroundColor !== 'transparent' && comp.backgroundColor !== 'rgba(0, 0, 0, 0)') {
-                    curBgColor = rgbToHex(comp.backgroundColor);
-                }
-                curFontSize = targetEl.style.fontSize || comp.fontSize || "";
-                curFontWeight = targetEl.style.fontWeight || comp.fontWeight || "";
-                curTextAlign = targetEl.style.textAlign || comp.textAlign || "";
-            }
-        } catch (e) {}
-
-        // Font Size & Weight Row
         const fontRow = document.createElement('div');
         fontRow.className = 'grid grid-cols-2 gap-2';
         fontRow.innerHTML = \`
             <div>
                 <label class="block text-[10px] text-slate-400 font-bold uppercase">Font Size</label>
                 <select id="inspFontSize" class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:outline-none">
-                    <option value="">Default (\${curFontSize || 'auto'})</option>
+                    <option value="">Default</option>
                     <option value="12px">XS (12px)</option>
                     <option value="14px">SM (14px)</option>
                     <option value="16px">Base (16px)</option>
@@ -630,7 +254,7 @@ export default {
             <div>
                 <label class="block text-[10px] text-slate-400 font-bold uppercase">Font Weight</label>
                 <select id="inspFontWeight" class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg p-1.5 text-xs focus:outline-none">
-                    <option value="">Default (\${curFontWeight || 'auto'})</option>
+                    <option value="">Default</option>
                     <option value="400">Normal (400)</option>
                     <option value="500">Medium (500)</option>
                     <option value="600">Semibold (600)</option>
@@ -641,12 +265,6 @@ export default {
         \`;
         const sizeSelect = fontRow.querySelector('#inspFontSize');
         const weightSelect = fontRow.querySelector('#inspFontWeight');
-        if (curFontSize && Array.from(sizeSelect.options).some(o => o.value === curFontSize)) {
-            sizeSelect.value = curFontSize;
-        }
-        if (curFontWeight && Array.from(weightSelect.options).some(o => o.value === curFontWeight)) {
-            weightSelect.value = curFontWeight;
-        }
 
         sizeSelect.addEventListener('change', (e) => {
             pushUndoState();
@@ -660,24 +278,23 @@ export default {
         });
         styleBox.appendChild(fontRow);
 
-        // Alignment & Colors Row
         const colorRow = document.createElement('div');
         colorRow.className = 'grid grid-cols-3 gap-2';
         colorRow.innerHTML = \`
             <div>
                 <label class="block text-[10px] text-slate-400 font-bold uppercase">Text Color</label>
-                <input type="color" id="inspTextColor" value="\${curTextColor}" class="w-full h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5" />
+                <input type="color" id="inspTextColor" value="#ffffff" class="w-full h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5" />
             </div>
             <div>
                 <label class="block text-[10px] text-slate-400 font-bold uppercase">BG Color</label>
-                <input type="color" id="inspBgColor" value="\${curBgColor}" class="w-full h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5" />
+                <input type="color" id="inspBgColor" value="#090a0f" class="w-full h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5" />
             </div>
             <div>
                 <label class="block text-[10px] text-slate-400 font-bold uppercase">Align</label>
                 <div class="flex gap-1 pt-1">
-                    <button type="button" data-align="left" class="align-btn flex-1 bg-slate-950 border border-slate-700 py-1 text-[10px] text-slate-300 rounded hover:bg-slate-800 \${curTextAlign === 'left' ? 'border-emerald-500 text-emerald-400 font-bold' : ''}">Left</button>
-                    <button type="button" data-align="center" class="align-btn flex-1 bg-slate-950 border border-slate-700 py-1 text-[10px] text-slate-300 rounded hover:bg-slate-800 \${curTextAlign === 'center' ? 'border-emerald-500 text-emerald-400 font-bold' : ''}">Center</button>
-                    <button type="button" data-align="right" class="align-btn flex-1 bg-slate-950 border border-slate-700 py-1 text-[10px] text-slate-300 rounded hover:bg-slate-800 \${curTextAlign === 'right' ? 'border-emerald-500 text-emerald-400 font-bold' : ''}">Right</button>
+                    <button type="button" data-align="left" class="align-btn flex-1 bg-slate-950 border border-slate-700 py-1 text-[10px] text-slate-300 rounded hover:bg-slate-800">Left</button>
+                    <button type="button" data-align="center" class="align-btn flex-1 bg-slate-950 border border-slate-700 py-1 text-[10px] text-slate-300 rounded hover:bg-slate-800">Center</button>
+                    <button type="button" data-align="right" class="align-btn flex-1 bg-slate-950 border border-slate-700 py-1 text-[10px] text-slate-300 rounded hover:bg-slate-800">Right</button>
                 </div>
             </div>
         \`;
@@ -706,114 +323,55 @@ export default {
 
         formContainer.appendChild(grid);
 
-        // 3. SUB-ELEMENTS & SECTION EDITABLE VARIABLES (Headlines, Text, Links, Buttons, Images)
-        const childElements = Array.from(targetEl.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, a, button, img, li, label')).filter(child => child !== targetEl).slice(0, 25);
-        if (childElements.length > 0) {
+        const childLinks = Array.from(targetEl.querySelectorAll('a, button, li')).slice(0, 10);
+        if (childLinks.length > 0 && targetEl !== childLinks[0]) {
             const subBox = document.createElement('div');
             subBox.className = 'bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2 text-xs font-mono';
             subBox.innerHTML = \`
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <h4 class="text-amber-400 font-bold flex items-center gap-1">🧩 Editable Section Variables & Sub-Items (\${childElements.length})</h4>
-                    <span class="text-[10px] text-slate-400">Click 🗑️ to remove element</span>
+                    <h4 class="text-amber-400 font-bold flex items-center gap-1">🧩 Sub-Variables & Items inside section (\${childLinks.length})</h4>
+                    <span class="text-[10px] text-slate-400">Click 🗑️ to subtract variable</span>
                 </div>
             \`;
             const subList = document.createElement('div');
-            subList.className = 'space-y-2 max-h-[220px] overflow-y-auto pr-1';
+            subList.className = 'space-y-1.5 max-h-[140px] overflow-y-auto pr-1';
 
-            childElements.forEach((child) => {
-                const tag = child.tagName.toLowerCase();
+            childLinks.forEach((child) => {
                 const childItem = document.createElement('div');
-                childItem.className = 'flex flex-col gap-1.5 bg-slate-950 p-2 rounded-lg border border-slate-800 text-[11px]';
+                childItem.className = 'flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 text-[11px]';
+                const childText = child.innerText.trim() || child.tagName.toLowerCase();
+                const childHref = child.getAttribute('href') || '';
+                childItem.innerHTML = \`
+                    <span class="text-slate-400 font-bold text-[10px] uppercase w-12 truncate">\${child.tagName}</span>
+                    <input type="text" value="\${childText}" class="child-text flex-1 bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-0.5 text-xs focus:outline-none" />
+                    \${child.tagName.toLowerCase() === 'a' ? \`<input type="text" value="\${childHref}" placeholder="href" class="child-href w-28 bg-slate-900 border border-slate-700 text-sky-300 rounded px-2 py-0.5 text-xs focus:outline-none" />\` : ''}
+                    <button type="button" class="del-child-btn px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded hover:bg-rose-500/30 text-[10px] font-bold cursor-pointer">🗑️</button>
+                \`;
 
-                const textVal = child.innerText ? child.innerText.trim() : (child.textContent ? child.textContent.trim() : '');
-                
-                if (tag === 'img') {
-                    const srcVal = child.getAttribute('src') || '';
-                    const altVal = child.getAttribute('alt') || '';
-                    childItem.innerHTML = \`
-                        <div class="flex items-center justify-between">
-                            <span class="text-amber-400 font-bold text-[10px] uppercase">🖼️ IMG (\${altVal || 'Image'})</span>
-                            <button type="button" class="del-child-btn px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded hover:bg-rose-500/30 text-[10px] font-bold cursor-pointer">🗑️</button>
-                        </div>
-                        <input type="text" value="\${srcVal}" placeholder="Image src URL" class="child-src bg-slate-900 border border-slate-700 text-amber-300 rounded px-2 py-1 text-xs focus:outline-none" />
-                        <input type="text" value="\${altVal}" placeholder="Image alt description" class="child-alt bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-1 text-xs focus:outline-none" />
-                    \`;
-                    const srcInp = childItem.querySelector('.child-src');
-                    const altInp = childItem.querySelector('.child-alt');
-                    const delBtn = childItem.querySelector('.del-child-btn');
+                const textInp = childItem.querySelector('.child-text');
+                const hrefInp = childItem.querySelector('.child-href');
+                const delBtn = childItem.querySelector('.del-child-btn');
 
-                    srcInp.addEventListener('input', (e) => {
-                        pushUndoState();
-                        child.setAttribute('src', e.target.value.trim());
-                        syncToPagesTree();
-                    });
-                    altInp.addEventListener('input', (e) => {
-                        pushUndoState();
-                        child.setAttribute('alt', e.target.value.trim());
-                        syncToPagesTree();
-                    });
-                    delBtn.addEventListener('click', () => {
-                        pushUndoState();
-                        child.remove();
-                        childItem.remove();
-                        syncToPagesTree();
-                    });
-                } else if (tag === 'a') {
-                    const hrefVal = child.getAttribute('href') || '';
-                    childItem.innerHTML = \`
-                        <div class="flex items-center justify-between">
-                            <span class="text-sky-400 font-bold text-[10px] uppercase">🔗 LINK (A)</span>
-                            <button type="button" class="del-child-btn px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded hover:bg-rose-500/30 text-[10px] font-bold cursor-pointer">🗑️</button>
-                        </div>
-                        <div class="flex gap-1.5">
-                            <input type="text" value="\${textVal}" placeholder="Link label text" class="child-text flex-1 bg-slate-900 border border-slate-700 text-slate-200 rounded px-2 py-1 text-xs focus:outline-none" />
-                            <input type="text" value="\${hrefVal}" placeholder="href target" class="child-href w-36 bg-slate-900 border border-slate-700 text-sky-300 rounded px-2 py-1 text-xs focus:outline-none" />
-                        </div>
-                    \`;
-                    const textInp = childItem.querySelector('.child-text');
-                    const hrefInp = childItem.querySelector('.child-href');
-                    const delBtn = childItem.querySelector('.del-child-btn');
-
+                if (textInp) {
                     textInp.addEventListener('input', (e) => {
                         pushUndoState();
                         child.innerText = e.target.value;
                         syncToPagesTree();
                     });
+                }
+                if (hrefInp) {
                     hrefInp.addEventListener('input', (e) => {
                         pushUndoState();
                         child.setAttribute('href', e.target.value.trim());
                         syncToPagesTree();
                     });
-                    delBtn.addEventListener('click', () => {
-                        pushUndoState();
-                        child.remove();
-                        childItem.remove();
-                        syncToPagesTree();
-                    });
-                } else {
-                    const tagLabel = tag.toUpperCase();
-                    childItem.innerHTML = \`
-                        <div class="flex items-center justify-between">
-                            <span class="text-emerald-400 font-bold text-[10px] uppercase">📝 \${tagLabel}</span>
-                            <button type="button" class="del-child-btn px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded hover:bg-rose-500/30 text-[10px] font-bold cursor-pointer">🗑️</button>
-                        </div>
-                        <textarea rows="1" class="child-text w-full bg-slate-900 border border-slate-700 text-slate-200 rounded p-1.5 text-xs focus:outline-none">\${textVal}</textarea>
-                    \`;
-                    const textInp = childItem.querySelector('.child-text');
-                    const delBtn = childItem.querySelector('.del-child-btn');
-
-                    textInp.addEventListener('input', (e) => {
-                        pushUndoState();
-                        child.innerText = e.target.value;
-                        syncToPagesTree();
-                    });
-                    delBtn.addEventListener('click', () => {
-                        pushUndoState();
-                        child.remove();
-                        childItem.remove();
-                        syncToPagesTree();
-                    });
                 }
+                delBtn.addEventListener('click', () => {
+                    pushUndoState();
+                    child.remove();
+                    childItem.remove();
+                    syncToPagesTree();
+                });
 
                 subList.appendChild(childItem);
             });
@@ -822,7 +380,6 @@ export default {
         }
     }
 
-    // Helper: Friendly Name for Element
     function getFriendlyName(el) {
         const tag = el.tagName.toLowerCase();
         if (tag === 'header') return 'Header Section';
@@ -837,7 +394,6 @@ export default {
         return \`\${tag.toUpperCase()} Component\`;
     }
 
-    // Sync live DOM to sitePagesTree & trigger preview tab refresh if needed
     function syncToPagesTree() {
         if (InspectorState.iframeEl) {
             const doc = InspectorState.iframeEl.contentDocument || InspectorState.iframeEl.contentWindow?.document;
@@ -851,7 +407,6 @@ export default {
         }
     }
 
-    // Attach Action Control Buttons (Add Item, Delete, Undo, Redo, Deselect, AI Refine)
     function setupInspectorControls() {
         const addBtn = document.getElementById('inspectorAddVarBtn');
         const delBtn = document.getElementById('inspectorDeleteBtn');
@@ -957,7 +512,6 @@ export default {
             };
         }
 
-        // Targeted AI Section Edit Execution
         if (aiBtn && aiInput) {
             aiBtn.onclick = async () => {
                 const promptVal = aiInput.value.trim();
@@ -1012,20 +566,17 @@ export default {
         }
     }
 
-    // Export module global API
     window.XsiteInspector = {
         setupIframeInspector,
         setupInspectorControls,
-        pushUndoState,
-        renderVariableInspector
+        pushUndoState
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         setupInspectorControls();
     });
 
-})(window);
-`, {
+})(window);`, {
         headers: {
           ...corsHeaders,
           "Content-Type": "application/javascript; charset=utf-8",
@@ -1127,6 +678,7 @@ CRITICAL RULES:
       }
     }
 
+    const url = new URL(request.url);
     const MASTER_DEV_KEY = env.MASTER_DEV_KEY || "XSTREAM-ADMIN-DEV-99";
 
     // PRICING TIER DEFINITIONS & STRIPE LINE ITEMS
@@ -2372,7 +1924,7 @@ CRITICAL RULES:
         const user = await getUserRecord(licenseKey);
         if (!user) throw new Error("Unauthorized custom domain setup request. Valid activation key required.");
 
-        const githubToken = getSecret(env, 'GITHUB_TOKEN');
+        const githubToken = env.GITHUB_TOKEN;
         const username = "xstreamflex";
         if (!githubToken) throw new Error("Worker GITHUB_TOKEN environment secret is missing.");
 
@@ -2428,7 +1980,7 @@ CRITICAL RULES:
         const user = await getUserRecord(licenseKey);
         if (!user) throw new Error("Unauthorized deployment transaction authorization.");
         
-        let githubToken = getSecret(env, 'GITHUB_TOKEN');
+        let githubToken = env.GITHUB_TOKEN;
         let username = "xstreamflex";
         let repoName = (companyName || 'xsite').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 50) || 'xsite-' + Date.now();
 
@@ -2510,141 +2062,6 @@ CRITICAL RULES:
       }
     }
 
-    // ENDPOINT 9: STRIPE & PAYPAL BI-DIRECTIONAL CATALOG SYNC
-    if (url.pathname === "/payment/sync-catalog" && request.method === "POST") {
-      try {
-        const { provider, stripeApiKey, paypalClientId, paypalSecret, products } = await request.json();
-        const syncedProducts = [];
-
-        if (provider === "stripe" && stripeApiKey) {
-          for (const prod of (products || [])) {
-            try {
-              const stripeRes = await fetch("https://api.stripe.com/v1/products", {
-                method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${stripeApiKey.trim()}`,
-                  "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams({
-                  name: prod.name || prod.title || "XSITE Product",
-                  description: prod.description || "Product from XSITE",
-                  ...(prod.image ? { "images[0]": prod.image } : {})
-                })
-              });
-              const stripeProd = await stripeRes.json();
-
-              if (stripeProd.id && prod.price) {
-                const amountCents = Math.round(parseFloat(prod.price) * 100);
-                const priceRes = await fetch("https://api.stripe.com/v1/prices", {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${stripeApiKey.trim()}`,
-                    "Content-Type": "application/x-www-form-urlencoded"
-                  },
-                  body: new URLSearchParams({
-                    product: stripeProd.id,
-                    unit_amount: amountCents.toString(),
-                    currency: prod.currency || "usd"
-                  })
-                });
-                const stripePrice = await priceRes.json();
-                syncedProducts.push({
-                  ...prod,
-                  stripeProductId: stripeProd.id,
-                  stripePriceId: stripePrice.id,
-                  buyUrl: `https://checkout.stripe.com/pay/${stripePrice.id}`
-                });
-              } else {
-                syncedProducts.push(prod);
-              }
-            } catch (e) {
-              syncedProducts.push({ ...prod, error: e.message });
-            }
-          }
-        } else if (provider === "paypal" && paypalClientId) {
-          for (const prod of (products || [])) {
-            syncedProducts.push({
-              ...prod,
-              paypalClientId,
-              buyUrl: `https://www.paypal.com/checkoutnow?client_id=${paypalClientId}&amount=${prod.price || '10.00'}`
-            });
-          }
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          provider: provider || "custom",
-          syncedProducts: syncedProducts.length > 0 ? syncedProducts : products
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // ENDPOINT 10: REPOSITORY PULL & UPDATE SYNCHRONIZER
-    if (url.pathname === "/repo/sync" && (request.method === "POST" || request.method === "GET")) {
-      try {
-        const { repoName, branch } = request.method === "POST" ? await request.json() : {};
-        const githubToken = getSecret(env, 'GITHUB_TOKEN');
-        const username = "xstreamflex";
-        const targetRepo = repoName || "xsite";
-
-        let commits = [];
-        if (githubToken) {
-          const commitsRes = await fetch(`https://api.github.com/repos/${username}/${targetRepo}/commits?per_page=5`, {
-            headers: { 'Authorization': `token ${githubToken}`, 'User-Agent': 'Cloudflare-Worker-XSITES' }
-          });
-          if (commitsRes.ok) {
-            const rawCommits = await commitsRes.json();
-            commits = rawCommits.map(c => ({
-              sha: c.sha.substring(0, 7),
-              message: c.commit.message,
-              date: c.commit.author.date
-            }));
-          }
-        }
-
-        return new Response(JSON.stringify({
-          success: true,
-          repo: `${username}/${targetRepo}`,
-          branch: branch || "main",
-          status: "Up-to-date",
-          latestCommits: commits
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
-    // ENDPOINT 11: SYSTEM QUALITY CONTROL (QC) DIAGNOSTICS
-    if (url.pathname === "/qc/check" && (request.method === "GET" || request.method === "POST")) {
-      try {
-        const checks = {
-          workerHealth: "OK",
-          kvStorage: env.XSITES_KEYS ? "CONNECTED" : "UNBOUND_MOCK",
-          hasGroq: Boolean(env.GROQ_API_KEY),
-          hasGemini: Boolean(env.GEMINI_API_KEY),
-          hasClaude: Boolean(env.CLAUDE_API_KEY),
-          hasDeepSeek: Boolean(env.DEEPSEEK_API_KEY),
-          hasKimi: Boolean(env.KIMI_API_KEY),
-          hasGithub: Boolean(env.GITHUB_TOKEN),
-          hasAI: Boolean(env.AI),
-          timestamp: new Date().toISOString()
-        };
-
-        return new Response(JSON.stringify({
-          success: true,
-          qcStatus: "PASSED",
-          checks
-        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-      } catch (err) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
     return new Response(JSON.stringify({ success: true, message: "XSITES Engine API Active" }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -2653,45 +2070,22 @@ CRITICAL RULES:
 };
 
 async function callBestAI(userPrompt, systemPrompt, env) {
-  const groqKey = getSecret(env, 'GROQ_API_KEY');
-  const claudeKey = getSecret(env, 'CLAUDE_API_KEY');
-  const geminiKey = getSecret(env, 'GEMINI_API_KEY');
-  const deepseekKey = getSecret(env, 'DEEPSEEK_API_KEY');
-  const kimiKey = getSecret(env, 'KIMI_API_KEY');
-
   const providers = [
-    { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, groqKey) },
-    { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, claudeKey) },
-    { name: 'Gemini', func: () => callGemini(userPrompt, systemPrompt, geminiKey) },
-    { name: 'DeepSeek', func: () => callDeepSeek(userPrompt, systemPrompt, deepseekKey) },
-    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, kimiKey) },
-    { name: 'WorkersAI', func: () => callCloudflareAI(userPrompt, systemPrompt, env?.AI) }
+    { name: 'Groq', func: () => callGroq(userPrompt, systemPrompt, env.GROQ_API_KEY) },
+    { name: 'Claude', func: () => callClaude(userPrompt, systemPrompt, env.CLAUDE_API_KEY) },
+    { name: 'Gemini', func: () => callGemini(userPrompt, env.GEMINI_API_KEY) },
+    { name: 'Kimi', func: () => callKimi(userPrompt, systemPrompt, env.KIMI_API_KEY) }
   ];
 
   for (const provider of providers) {
     try {
-      const result = await provider.func();
-      if (result && !result.includes("high demand") && result.length > 20) {
-        return cleanResponse(result);
-      }
+      const html = await provider.func();
+      if (html && !html.includes("high demand")) return cleanResponse(html);
     } catch (e) {
       console.warn(`Fallback Layer: ${provider.name} bypassed: ${e.message}`);
     }
   }
   throw new Error("All backend fallback execution paths are currently exhausted.");
-}
-
-async function callCloudflareAI(userPrompt, systemPrompt, aiBinding) {
-  if (!aiBinding) throw new Error("Missing Workers AI binding");
-  const res = await aiBinding.run('@cf/meta/llama-3.3-70b-instruct', {
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ],
-    max_tokens: 8192
-  });
-  if (res && res.response) return res.response;
-  throw new Error("Empty response from Workers AI");
 }
 
 async function callGroq(userPrompt, systemPrompt, key) {
@@ -2706,7 +2100,6 @@ async function callGroq(userPrompt, systemPrompt, key) {
     })
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "Groq error");
   return data.choices[0].message.content;
 }
 
@@ -2721,46 +2114,18 @@ async function callClaude(userPrompt, systemPrompt, key) {
     })
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "Claude error");
   return data.content[0].text;
 }
 
-async function callGemini(userPrompt, systemPrompt, key) {
+async function callGemini(userPrompt, key) {
   if (!key) throw new Error("Missing key");
-  const combined = systemPrompt ? `${systemPrompt}\n\nUser Request: ${userPrompt}` : userPrompt;
-  
-  // Try Gemini 2.0 Flash first, then 1.5 Flash
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
-  for (const model of models) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: combined }] }] })
-      });
-      const data = await res.json();
-      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-    } catch (e) {}
-  }
-  throw new Error("Gemini generation failed on all candidate models");
-}
-
-async function callDeepSeek(userPrompt, systemPrompt, key) {
-  if (!key) throw new Error("Missing key");
-  const res = await fetch('https://api.deepseek.com/chat/completions', {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
-      temperature: 0.1, max_tokens: 8000
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: userPrompt }] }] })
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "DeepSeek error");
-  return data.choices[0].message.content;
+  return data.candidates[0].content.parts[0].text;
 }
 
 async function callKimi(userPrompt, systemPrompt, key) {
@@ -2775,7 +2140,6 @@ async function callKimi(userPrompt, systemPrompt, key) {
     })
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "Kimi error");
   return data.choices[0].message.content;
 }
 
