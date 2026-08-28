@@ -1,0 +1,16 @@
+name = "xsites-backend-worker"
+main = "index.js"
+compatibility_date = "2026-08-22"
+compatibility_flags = ["nodejs_compat"]
+
+[ai]
+binding = "AI"
+
+[vars]
+WEBSITE_URL = "https://xstreamflex.com"
+JWT_SECRET = "xstreamflex_secret_jwt_key_2026"
+ENCRYPTION_KEY = "xstreamflex_aes_secret_key_2026"
+
+[[kv_namespaces]]
+binding = "XSITES_KEYS"
+id = "b5e8b14351cf4cd296645c76123e1ee1"

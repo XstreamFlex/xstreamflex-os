@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMG // Media Vault & Image Host</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="../xstreamflex-os/os-sdk.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="ximg-widget.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            glow: '#10b981',
+                            xbox: '#107C10',
+                            darkBg: '#090a0f',
+                            panel: '#11131e'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #090a0f; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between font-sans relative overflow-x-hidden">
+
+    <!-- Unified Master Header Navigation Bar -->
+    <nav class="border-b border-slate-800/80 backdrop-blur-md bg-slate-950/80 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="flex items-center gap-2">
+                    <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="rocket" class="h-8 w-auto object-contain">
+                    <span class="text-sm font-black tracking-widest uppercase bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">XSTREAMFLEX OS</span>
+                </a>
+                <span class="text-[9px] uppercase tracking-widest font-mono px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hidden sm:inline-block">XMG Vault</span>
+            </div>
+
+            <div class="hidden md:flex items-center gap-5 text-xs font-semibold tracking-wide font-mono">
+                <a href="account.html" class="text-slate-400 hover:text-white transition-colors">📊 Account</a>
+                <a href="xsite.html" class="text-slate-400 hover:text-white transition-colors">⚡ XSITE Engine</a>
+                <a href="ezsite.html" class="text-slate-400 hover:text-white transition-colors">🪄 EZsite Wizard</a>
+                <a href="xmg.html" class="text-emerald-400 font-bold border-b border-emerald-400 pb-0.5">🖼️ XMG Vault</a>
+                <a href="xmail.html" class="text-slate-400 hover:text-white transition-colors">✉️ XMAIL Engine</a>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="xstreamProjectSelectorContainer"></div>
+                <div id="xstreamAuthWidget" class="flex items-center gap-3 text-xs font-mono"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 md:px-6 py-8 flex-1 w-full space-y-8">
+        
+        <!-- Header Banner & Upload Area -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6 relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full text-sky-400 text-xs font-mono font-bold">
+                        <span>🖼️ Web-Optimized Media Vault</span>
+                    </div>
+                    <h1 class="text-3xl font-black text-white tracking-tight">XMG Media Vault & Optimizer</h1>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Upload, convert, and store images in ultra-fast WebP format. Assets uploaded here sync across your XSITE Studio and EZsite build environments.
+                    </p>
+                </div>
+                
+                <button onclick="document.getElementById('imageUploadInput').click()" class="bg-gradient-to-r from-emerald-400 to-teal-500 hover:opacity-90 text-black font-black text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider shadow-xl transition-all shrink-0 flex items-center gap-2 font-mono cursor-pointer">
+                    <span>📤 Upload New Image</span>
+                </button>
+                <input type="file" id="imageUploadInput" accept="image/*" multiple class="hidden" onchange="handleImageUploadFiles(this.files)">
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div id="xmgDropZone" onclick="document.getElementById('imageUploadInput').click()" class="border-2 border-dashed border-slate-700 hover:border-emerald-500/60 bg-black/40 hover:bg-black/60 rounded-xl p-6 text-center cursor-pointer transition-all space-y-2 font-mono relative z-10">
+                <div class="text-3xl">🖼️</div>
+                <p class="text-xs font-bold text-slate-200">Drag & Drop Image Files Here, or Click to Select</p>
+                <p class="text-[10px] text-slate-500">Supports PNG, JPG, GIF, SVG, WebP • Auto-converts to WebP with up to 80% compression</p>
+            </div>
+        </div>
+
+        <!-- Metrics Dashboard Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Vault Total Assets</span>
+                    <span>🖼️</span>
+                </div>
+                <div id="statTotalImages" class="text-3xl font-black text-white">0</div>
+                <p class="text-[11px] text-slate-500 font-mono">WebP assets stored in catalog</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Storage Optimization</span>
+                    <span>⚡</span>
+                </div>
+                <div id="statSavingsAvg" class="text-3xl font-black text-emerald-400">0%</div>
+                <p class="text-[11px] text-slate-500 font-mono">Average WebP file size reduction</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                <div class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Total Vault Size</span>
+                    <span>💾</span>
+                </div>
+                <div id="statTotalSize" class="text-3xl font-black text-sky-400">0 KB</div>
+                <p class="text-[11px] text-slate-500 font-mono">Compressed payload size</p>
+            </div>
+        </div>
+
+        <!-- Catalog Controls & Gallery Grid -->
+        <div class="space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-4 font-mono">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-slate-400 mr-1">Tag Filter:</span>
+                    <button onclick="setFilterTag('all')" id="tagFilter_all" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">All</button>
+                    <button onclick="setFilterTag('hero')" id="tagFilter_hero" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">Hero / Banner</button>
+                    <button onclick="setFilterTag('product')" id="tagFilter_product" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">Product</button>
+                    <button onclick="setFilterTag('gallery')" id="tagFilter_gallery" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">Gallery</button>
+                    <button onclick="setFilterTag('article')" id="tagFilter_article" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">Article</button>
+                    <button onclick="setFilterTag('logo')" id="tagFilter_logo" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-slate-400 border border-slate-800 hover:text-white">Logo</button>
+                </div>
+
+                <div class="flex items-center gap-3 text-xs">
+                    <input type="text" id="xmgSearchInput" oninput="renderGalleryGrid()" placeholder="🔍 Search assets..." class="bg-black/60 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                    <span id="imageCountBadge" class="bg-slate-900 border border-slate-800 px-3 py-1 rounded-xl text-emerald-400 font-bold">0 Images</span>
+                </div>
+            </div>
+
+            <!-- Image Gallery Grid -->
+            <div id="imageGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                <!-- Dynamic Image Cards Rendered Here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- HIGH-RES PREVIEW MODAL -->
+    <div id="xmgPreviewModal" class="hidden fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 transition-all">
+        <div class="max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl space-y-4 p-6 relative font-mono text-xs text-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="previewTitle" class="font-bold text-white text-sm">Image Preview</h3>
+                <button onclick="closePreviewModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <div class="w-full max-h-[65vh] flex items-center justify-center bg-black/80 rounded-xl overflow-hidden p-2 border border-slate-800">
+                <img id="previewImageEl" src="" alt="preview" class="max-w-full max-h-[60vh] object-contain rounded-lg">
+            </div>
+            <div class="flex items-center justify-between flex-wrap gap-3 pt-2">
+                <div class="text-[11px] text-slate-400 space-x-3">
+                    <span>Tag: <strong id="previewTag" class="text-emerald-400">hero</strong></span>
+                    <span>Saved: <strong id="previewSavings" class="text-emerald-400">65%</strong></span>
+                    <span>ALT: <span id="previewAlt" class="text-slate-300">None</span></span>
+                </div>
+                <button id="previewCopyBtn" onclick="" class="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold transition">
+                    📋 Copy Direct Image URL
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- METADATA EDIT MODAL -->
+    <div id="xmgEditModal" class="hidden fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 transition-all">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative text-slate-100 font-sans">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🏷️</span>
+                    <h3 class="text-lg font-bold text-white">Edit Photo Metadata</h3>
+                </div>
+                <button type="button" onclick="closeEditModal()" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+
+            <form id="xmgEditForm" onsubmit="handleSaveMetadata(event)" class="space-y-4 text-xs font-mono">
+                <input type="hidden" id="editImageId">
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Image Title</label>
+                    <input type="text" id="editTitleInput" required class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">Category Tag</label>
+                    <select id="editTagInput" class="w-full bg-black/60 border border-slate-800 rounded-xl px-3.5 py-2.5 text-emerald-400 focus:outline-none focus:border-emerald-500/50">
+                        <option value="hero">Hero / Banner</option>
+                        <option value="product">Product Photo</option>
+                        <option value="gallery">Gallery Photo</option>
+                        <option value="article">Blog Article Photo</option>
+                        <option value="logo">Brand Logo</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase text-slate-400 font-bold">SEO ALT Text Description</label>
+                    <textarea id="editAltInput" rows="3" placeholder="Describe the image content..." class="w-full bg-black/60 border border-slate-800 rounded-xl p-3.5 text-slate-200 focus:outline-none focus:border-emerald-500/50 font-mono text-xs"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-500 text-black font-black rounded-xl uppercase tracking-wider hover:opacity-90 transition">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="xmgToast" class="fixed bottom-6 right-6 z-[999999] hidden bg-slate-900 border border-emerald-500/40 text-emerald-300 font-mono text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <span class="text-base">🖼️</span>
+        <span id="xmgToastText">Notification text...</span>
+    </div>
+
+    <footer class="border-t border-slate-900 py-8 text-center text-xs font-mono text-slate-600">
+        © 2026 Xstreamflex OS • XMG Media Vault Engine (GitHub Pages & Cloudflare Ready)
+    </footer>
+
+    <script>
+        // XMG MEDIA VAULT ENGINE & STORAGE MANAGER
+        const STORAGE_KEY_XMG = 'xmg_media_catalog';
+        let currentFilterTag = 'all';
+
+        const defaultCatalog = [
+            {
+                id: 'xmg_demo_1',
+                title: 'Xstreamflex OS Launch Rocket Banner',
+                tag: 'hero',
+                alt: 'Xstreamflex OS launch rocket banner image',
+                url: 'https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000',
+                origSize: 145000,
+                webpSize: 42000,
+                savings: 71,
+                createdAt: new Date().toISOString()
+            }
+        ];
+
+        function getCatalog() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY_XMG);
+                return data ? JSON.parse(data) : defaultCatalog;
+            } catch(e) {
+                return defaultCatalog;
+            }
+        }
+
+        function saveCatalog(arr) {
+            try {
+                localStorage.setItem(STORAGE_KEY_XMG, JSON.stringify(arr));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    while (arr.length > 5) {
+                        arr.pop();
+                        try {
+                            localStorage.setItem(STORAGE_KEY_XMG, JSON.stringify(arr));
+                            break;
+                        } catch (err) {}
+                    }
+                }
+            }
+            
+            // Also sync to global assetVault for XSITE Studio compatibility
+            try {
+                localStorage.setItem('xsites_asset_vault', JSON.stringify(arr.map(img => ({
+                    id: img.id,
+                    type: 'image',
+                    tag: img.tag || 'xmg',
+                    url: img.url,
+                    desc: img.title,
+                    createdAt: img.createdAt
+                }))));
+            } catch(e){}
+
+            updateVaultStats();
+            renderGalleryGrid();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('xmgToast');
+            const toastText = document.getElementById('xmgToastText');
+            if (!toast || !toastText) return;
+            toastText.textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function updateVaultStats() {
+            const catalog = getCatalog();
+            const totalCount = catalog.length;
+            
+            let totalBytes = 0;
+            let totalSavingsSum = 0;
+            catalog.forEach(item => {
+                totalBytes += (item.webpSize || item.origSize || 30000);
+                totalSavingsSum += (item.savings || 65);
+            });
+
+            const avgSavings = totalCount > 0 ? Math.round(totalSavingsSum / totalCount) : 0;
+            const formattedSize = totalBytes > 1048576 
+                ? (totalBytes / 1048576).toFixed(1) + ' MB' 
+                : Math.round(totalBytes / 1024) + ' KB';
+
+            document.getElementById('statTotalImages').textContent = totalCount;
+            document.getElementById('statSavingsAvg').textContent = `${avgSavings}%`;
+            document.getElementById('statTotalSize').textContent = formattedSize;
+            document.getElementById('imageCountBadge').textContent = `${totalCount} Image${totalCount === 1 ? '' : 's'}`;
+        }
+
+        function setFilterTag(tag) {
+            currentFilterTag = tag;
+            ['all','hero','product','gallery','article','logo'].forEach(t => {
+                const btn = document.getElementById(`tagFilter_${t}`);
+                if (btn) {
+                    if (t === tag) {
+                        btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                    } else {
+                        btn.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-slate-900 text-slate-400 border border-slate-800 hover:text-white";
+                    }
+                }
+            });
+            renderGalleryGrid();
+        }
+
+        function renderGalleryGrid() {
+            const grid = document.getElementById('imageGalleryGrid');
+            if (!grid) return;
+
+            const query = (document.getElementById('xmgSearchInput')?.value || '').toLowerCase().trim();
+            const catalog = getCatalog().filter(item => {
+                const matchTag = currentFilterTag === 'all' || item.tag === currentFilterTag;
+                const matchQuery = !query || item.title.toLowerCase().includes(query) || (item.alt && item.alt.toLowerCase().includes(query));
+                return matchTag && matchQuery;
+            });
+
+            if (catalog.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-slate-900 border border-slate-800/80 rounded-2xl p-12 text-center space-y-3 text-slate-500 py-16">
+                        <span class="text-3xl block">🖼️</span>
+                        <p class="text-xs font-mono">No images found. Click <strong>Upload New Image</strong> to add assets to your vault.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = catalog.map(item => `
+                <div class="bg-slate-900 border border-slate-800/80 hover:border-slate-700 rounded-2xl p-3.5 space-y-3 transition shadow-xl font-mono text-xs flex flex-col justify-between group">
+                    <div class="space-y-2">
+                        <div class="w-full h-36 bg-black/80 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center relative cursor-pointer" onclick="openPreviewModal('${item.id}')">
+                            <img src="${item.url}" alt="${item.title}" class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300">
+                            <span class="absolute top-2 right-2 bg-emerald-500/90 text-black text-[9px] font-black uppercase px-2 py-0.5 rounded shadow">
+                                -${item.savings || 65}% WebP
+                            </span>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="bg-slate-800 text-sky-400 border border-slate-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase">${item.tag || 'media'}</span>
+                                <span class="text-[10px] text-slate-500">${Math.round((item.webpSize || 30000) / 1024)} KB</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-200 line-clamp-1" title="${item.title}">${item.title}</h4>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-1 pt-2 border-t border-slate-800/80 text-[10px]">
+                        <button onclick="copyImageUrl('${item.url}')" class="py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                            📋 Copy
+                        </button>
+                        <button onclick="openEditModal('${item.id}')" class="py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-bold transition flex items-center justify-center">
+                            ✏️ Edit
+                        </button>
+                        <button onclick="deleteImage('${item.id}')" class="py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg font-bold transition flex items-center justify-center">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // CLIENT-SIDE WEBP CANVAS COMPRESSION ENGINE
+        async function handleImageUploadFiles(files) {
+            if (!files || !files.length) return;
+            showToast(`⚡ Processing & compressing ${files.length} file${files.length > 1 ? 's' : ''} to WebP...`);
+
+            let catalog = getCatalog();
+            for (let file of files) {
+                try {
+                    const dataUrl = await convertToWebPDataUrl(file);
+                    const origSize = file.size;
+                    const webpSize = Math.round(dataUrl.length * 0.75); // approx base64 byte size
+                    const savings = Math.max(15, Math.round(((origSize - webpSize) / origSize) * 100));
+
+                    catalog.unshift({
+                        id: 'xmg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                        title: file.name.replace(/\.[^/.]+$/, ""),
+                        tag: 'gallery',
+                        alt: file.name,
+                        url: dataUrl,
+                        origSize: origSize,
+                        webpSize: webpSize,
+                        savings: savings,
+                        createdAt: new Date().toISOString()
+                    });
+                } catch(err) {
+                    console.error('Failed to convert image:', err);
+                }
+            }
+
+            saveCatalog(catalog);
+            showToast(`✅ ${files.length} image(s) optimized & saved to XMG Vault!`);
+        }
+
+        function convertToWebPDataUrl(file, maxDim = 1200, quality = 0.80) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.naturalWidth || img.width || 800;
+                        let height = img.naturalHeight || img.height || 600;
+
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const webpUrl = canvas.toDataURL('image/webp', quality);
+                        resolve(webpUrl);
+                    };
+                    img.onerror = () => reject(new Error('Image load error'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('File read error'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // MODAL HANDLERS
+        function copyImageUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('📋 Image URL copied to clipboard!');
+            }).catch(() => {
+                showToast('📋 URL copied!');
+            });
+        }
+
+        function openPreviewModal(id) {
+            const item = getCatalog().find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('previewTitle').textContent = item.title;
+            document.getElementById('previewImageEl').src = item.url;
+            document.getElementById('previewTag').textContent = item.tag || 'media';
+            document.getElementById('previewSavings').textContent = `${item.savings || 65}%`;
+            document.getElementById('previewAlt').textContent = item.alt || 'None';
+            document.getElementById('previewCopyBtn').onclick = () => copyImageUrl(item.url);
+            document.getElementById('xmgPreviewModal').classList.remove('hidden');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('xmgPreviewModal').classList.add('hidden');
+        }
+
+        function openEditModal(id) {
+            const item = getCatalog().find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('editImageId').value = item.id;
+            document.getElementById('editTitleInput').value = item.title;
+            document.getElementById('editTagInput').value = item.tag || 'gallery';
+            document.getElementById('editAltInput').value = item.alt || '';
+            document.getElementById('xmgEditModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('xmgEditModal').classList.add('hidden');
+        }
+
+        function handleSaveMetadata(e) {
+            e.preventDefault();
+            const id = document.getElementById('editImageId').value;
+            const title = document.getElementById('editTitleInput').value.trim();
+            const tag = document.getElementById('editTagInput').value;
+            const alt = document.getElementById('editAltInput').value.trim();
+
+            let catalog = getCatalog();
+            const idx = catalog.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                catalog[idx] = { ...catalog[idx], title, tag, alt };
+                saveCatalog(catalog);
+                closeEditModal();
+                showToast('💾 Photo metadata saved!');
+            }
+        }
+
+        function deleteImage(id) {
+            if (!confirm('Are you sure you want to delete this image from your vault?')) return;
+            let catalog = getCatalog().filter(i => i.id !== id);
+            saveCatalog(catalog);
+            showToast('🗑️ Image deleted from vault.');
+        }
+
+        // DRAG AND DROP HANDLERS
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('xmgDropZone');
+            if (dropZone) {
+                dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-emerald-400'); });
+                dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-emerald-400'); });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-emerald-400');
+                    if (e.dataTransfer.files.length) handleImageUploadFiles(e.dataTransfer.files);
+                });
+            }
+
+            if (!localStorage.getItem(STORAGE_KEY_XMG)) {
+                saveCatalog(defaultCatalog);
+            }
+            updateVaultStats();
+            renderGalleryGrid();
+            if (window.XstreamFlexOS) window.XstreamFlexOS.renderProjectSelector('xstreamProjectSelectorContainer');
+        });
+    </script>
+</body>
+</html>

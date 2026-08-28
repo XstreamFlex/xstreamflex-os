@@ -1,0 +1,19 @@
+# XIMG - Ultra Fail-Safe Apache / LiteSpeed Configuration
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Direct Image URL rewrite: /i/shortcode.webp -> image.php?code=shortcode (also supports .ico, .png, etc.)
+    RewriteRule ^i/([a-zA-Z0-9_-]+)\.?(webp|png|jpg|jpeg|ico|gif|bmp|avif)?$ image.php?code=$1 [QSA,L]
+
+    # Viewer Page URL rewrite: /v/shortcode -> view.php?code=shortcode
+    RewriteRule ^v/([a-zA-Z0-9_-]+)$ view.php?code=$1 [QSA,L]
+
+    # API Endpoints rewrites
+    RewriteRule ^api/upload/?$ api/upload.php [QSA,L]
+    RewriteRule ^api/gallery/?$ api/gallery.php [QSA,L]
+    RewriteRule ^api/verify/?$ api/verify.php [QSA,L]
+    RewriteRule ^api/delete/?$ api/delete.php [QSA,L]
+</IfModule>
+
+# Safe directory browsing prevention (does not trigger Options 500 error on LiteSpeed/cPanel)
+IndexIgnore *

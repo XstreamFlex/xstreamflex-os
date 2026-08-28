@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XStreamFlex Autoresponder | Xsites, XMail & XMG Ecosystem Engine</title>
+  
+  <!-- Early Theme Init Script to avoid flash -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <!-- Fonts: Orbitron & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            xbox: {
+              500: '#107C10',
+              600: '#0e6a0e',
+              400: '#1bb81b'
+            },
+            ps: {
+              500: '#00439c',
+              600: '#003070',
+              400: '#38bdf8'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            display: ['Orbitron', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    html.dark body {
+      background-color: #090d16;
+      color: #f8fafc;
+    }
+
+    .cyber-grid {
+      background-size: 40px 40px;
+      background-image: linear-gradient(to right, rgba(16, 124, 16, 0.05) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(0, 67, 156, 0.05) 1px, transparent 1px);
+    }
+
+    html.dark .cyber-grid {
+      background-image: linear-gradient(to right, rgba(16, 124, 16, 0.08) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(0, 67, 156, 0.08) 1px, transparent 1px);
+    }
+
+    .glow-green {
+      box-shadow: 0 0 20px rgba(16, 124, 16, 0.3);
+    }
+
+    .glow-green-sm {
+      box-shadow: 0 0 10px rgba(16, 124, 16, 0.2);
+    }
+
+    .glow-blue {
+      box-shadow: 0 0 20px rgba(0, 67, 156, 0.35);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #107C10 0%, #38bdf8 50%, #00439c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card-cyber {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease-in-out;
+    }
+
+    html.dark .card-cyber {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+
+    .card-cyber:hover {
+      border-color: rgba(16, 124, 16, 0.4);
+    }
+
+    .provider-card {
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      color: #0f172a;
+      transition: all 0.2s ease;
+    }
+
+    html.dark .provider-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .provider-card:hover {
+      border-color: #107C10;
+      background: rgba(16, 124, 16, 0.08);
+    }
+
+    .provider-card.active {
+      border-color: #107C10;
+      background: #eef2ff;
+      box-shadow: 0 0 15px rgba(16, 124, 16, 0.2);
+    }
+
+    html.dark .provider-card.active {
+      background: rgba(16, 124, 16, 0.2);
+      box-shadow: 0 0 15px rgba(16, 124, 16, 0.35);
+    }
+
+    .tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .tag-green { background: rgba(16, 124, 16, 0.15); color: #16a34a; border: 1px solid rgba(16, 124, 16, 0.3); }
+    html.dark .tag-green { background: rgba(16, 124, 16, 0.2); color: #4ade80; border: 1px solid rgba(16, 124, 16, 0.4); }
+
+    .tag-red { background: rgba(239, 68, 68, 0.15); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+    html.dark .tag-red { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+    .tag-blue { background: rgba(0, 67, 156, 0.15); color: #0284c7; border: 1px solid rgba(56, 189, 248, 0.3); }
+    html.dark .tag-blue { background: rgba(0, 67, 156, 0.25); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); }
+
+    .tag-purple { background: rgba(147, 51, 234, 0.15); color: #7e22ce; border: 1px solid rgba(147, 51, 234, 0.3); }
+    html.dark .tag-purple { background: rgba(147, 51, 234, 0.2); color: #d8b4fe; border: 1px solid rgba(147, 51, 234, 0.4); }
+
+    .tag-yellow { background: rgba(234, 179, 8, 0.15); color: #ca8a04; border: 1px solid rgba(234, 179, 8, 0.3); }
+    html.dark .tag-yellow { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.4); }
+
+    .tag-gray { background: rgba(100, 116, 139, 0.15); color: #475569; border: 1px solid rgba(100, 116, 139, 0.3); }
+    html.dark .tag-gray { background: rgba(100, 116, 139, 0.2); color: #cbd5e1; border: 1px solid rgba(100, 116, 139, 0.4); }
+
+    .btn-cyber {
+      background: #107C10;
+      color: #ffffff;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 12px rgba(16, 124, 16, 0.3);
+    }
+
+    .btn-cyber:hover {
+      background: #0e6a0e;
+      box-shadow: 0 0 20px rgba(16, 124, 16, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary-cyber {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    html.dark .btn-secondary-cyber {
+      background: rgba(30, 41, 59, 0.8);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary-cyber:hover {
+      background: #e2e8f0;
+      border-color: #0284c7;
+      color: #0f172a;
+    }
+
+    html.dark .btn-secondary-cyber:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    .btn-danger-cyber {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    html.dark .btn-danger-cyber {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-danger-cyber:hover {
+      background: #dc2626;
+      color: #ffffff;
+    }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th { background: #f1f5f9; color: #475569; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+    html.dark th { background: rgba(30, 41, 59, 0.6); color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+
+    td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #1e293b; }
+    html.dark td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #f8fafc; }
+
+    tr:hover td { background: #f8fafc; }
+    html.dark tr:hover td { background: rgba(30, 41, 59, 0.3); }
+
+    code { background: #f1f5f9; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #0284c7; }
+    html.dark code { background: #0f172a; border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; }
+  </style>
+</head>
+<body class="cyber-grid min-h-screen">
+
+  <!-- Header Navigation -->
+  <header class="sticky top-0 z-50 bg-white/90 dark:bg-[#0d1322]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-6 py-4 shadow-sm dark:shadow-none transition-colors">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-xbox-500 to-ps-500 flex items-center justify-center glow-green-sm">
+          <i class="fa-solid fa-rocket text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-display font-black text-xl tracking-wide flex items-center gap-2">
+            XSTREAM<span class="gradient-text">FLEX</span>
+            <span class="font-sans text-xs bg-xbox-500/20 text-xbox-400 border border-xbox-500/40 px-2.5 py-0.5 rounded-full font-bold uppercase">Xsites, XMail & XMG Synced</span>
+          </h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Unified Ecosystem Identity & Email Autoresponder Hub</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Light / Dark Mode Toggle Button -->
+        <button id="theme-toggle-btn" onclick="toggleTheme()" class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-xbox-500 transition-all cursor-pointer">
+          <i id="theme-icon" class="fa-solid fa-sun text-amber-400"></i>
+          <span id="theme-text">Light Mode</span>
+        </button>
+
+        <div class="flex items-center gap-2 text-xs font-semibold bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-emerald-600 dark:text-emerald-400">Ecosystem Synced</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div class="card-cyber p-5">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
+          <span>REGISTERED SITES</span>
+          <i class="fa-solid fa-globe text-ps-400"></i>
+        </div>
+        <div class="font-display font-bold text-3xl text-white" id="stat-sites">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">Xsite, EZsite & XMG</div>
+      </div>
+
+      <div class="card-cyber p-5">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
+          <span>TOTAL CONTACTS</span>
+          <i class="fa-solid fa-users text-xbox-400"></i>
+        </div>
+        <div class="font-display font-bold text-3xl text-white" id="stat-contacts">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">Active Subscribers</div>
+      </div>
+
+      <div class="card-cyber p-5">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
+          <span>EMAILS SENT</span>
+          <i class="fa-solid fa-paper-plane text-emerald-400"></i>
+        </div>
+        <div class="font-display font-bold text-3xl text-emerald-400" id="stat-sent">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">Delivered</div>
+      </div>
+
+      <div class="card-cyber p-5">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
+          <span>PENDING QUEUE</span>
+          <i class="fa-solid fa-hourglass-half text-amber-400"></i>
+        </div>
+        <div class="font-display font-bold text-3xl text-amber-400" id="stat-pending">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">Scheduled Jobs</div>
+      </div>
+
+      <div class="card-cyber p-5 col-span-2 md:col-span-1">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold mb-2">
+          <span>OPENS TRACKED</span>
+          <i class="fa-solid fa-chart-line text-purple-400"></i>
+        </div>
+        <div class="font-display font-bold text-3xl text-purple-400" id="stat-opens">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">Engagement Pixel</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-slate-800 mb-8 overflow-x-auto">
+      <button class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-xbox-500 text-xbox-400 flex items-center gap-2 whitespace-nowrap active" onclick="switchTab('emails')">
+        <i class="fa-solid fa-envelope"></i> Linked Email Identities
+      </button>
+      <button class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap" onclick="switchTab('sites')">
+        <i class="fa-solid fa-laptop-code"></i> Saved Sites & XMG Hubs
+      </button>
+      <button class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap" onclick="switchTab('sequences')">
+        <i class="fa-solid fa-bolt"></i> Autoresponder Workflows
+      </button>
+      <button class="tab-btn px-6 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap" onclick="switchTab('contacts')">
+        <i class="fa-solid fa-address-book"></i> Contacts & Leads
+      </button>
+    </div>
+
+    <!-- TAB 1: LINK EMAILS -->
+    <div id="tab-emails" class="tab-content block">
+      <div class="card-cyber p-6 mb-8">
+        <h2 class="font-display font-bold text-lg mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-xbox-400"></i> Link Email Account & Housed Identity
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Connect your Gmail, Outlook, Apple Email, or Custom SMTP account and house it under a saved site or XMG ecosystem identity.</p>
+
+        <!-- Provider Selection Presets -->
+        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider block mb-3">Select Email Provider:</label>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div id="preset-gmail" class="provider-card active" onclick="selectProviderPreset('gmail')">
+            <div class="text-2xl mb-1"><i class="fa-brands fa-google text-red-400"></i></div>
+            <div class="font-bold text-sm text-white">Gmail</div>
+            <div class="text-xs text-slate-400">Google / Workspace</div>
+          </div>
+          <div id="preset-outlook" class="provider-card" onclick="selectProviderPreset('outlook')">
+            <div class="text-2xl mb-1"><i class="fa-brands fa-microsoft text-sky-400"></i></div>
+            <div class="font-bold text-sm text-white">Outlook</div>
+            <div class="text-xs text-slate-400">Office365 / Hotmail</div>
+          </div>
+          <div id="preset-apple" class="provider-card" onclick="selectProviderPreset('apple')">
+            <div class="text-2xl mb-1"><i class="fa-brands fa-apple text-purple-300"></i></div>
+            <div class="font-bold text-sm text-white">Apple Mail</div>
+            <div class="text-xs text-slate-400">iCloud / @me.com</div>
+          </div>
+          <div id="preset-custom" class="provider-card" onclick="selectProviderPreset('custom')">
+            <div class="text-2xl mb-1"><i class="fa-solid fa-gears text-slate-400"></i></div>
+            <div class="font-bold text-sm text-white">Custom SMTP</div>
+            <div class="text-xs text-slate-400">Other Mail Server</div>
+          </div>
+        </div>
+
+        <!-- Setup Instruction Box -->
+        <div id="provider-guide-box" class="bg-slate-900/90 border-l-4 border-xbox-500 p-4 rounded-lg mb-6 text-xs text-slate-300 leading-relaxed">
+        </div>
+
+        <form id="form-link-email" onsubmit="linkEmail(event)">
+          <input type="hidden" id="email-provider" value="gmail">
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Sender Email Address</label>
+              <input type="email" id="email-address" class="w-full bg-slate-900 border border-slate-700 focus:border-xbox-500 focus:ring-1 focus:ring-xbox-500 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="e.g. john@gmail.com" onkeyup="handleEmailTyping(this.value)" required>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Sender Display Name</label>
+              <input type="text" id="email-sender-name" class="w-full bg-slate-900 border border-slate-700 focus:border-xbox-500 focus:ring-1 focus:ring-xbox-500 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="e.g. John Doe" required>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">House Under Saved Site / XMG Hub</label>
+              <select id="email-site-id" class="w-full bg-slate-900 border border-slate-700 focus:border-xbox-500 rounded-lg px-3 py-2.5 text-sm text-white">
+                <option value="">Global Ecosystem (All Sites)</option>
+              </select>
+            </div>
+            <div>
+              <label id="label-smtp-pass" class="block text-xs font-semibold text-slate-300 mb-1.5">App Password / Password</label>
+              <input type="password" id="email-smtp-pass" class="w-full bg-slate-900 border border-slate-700 focus:border-xbox-500 focus:ring-1 focus:ring-xbox-500 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="••••••••••••" required>
+            </div>
+          </div>
+
+          <div id="custom-smtp-fields" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">SMTP Host</label>
+              <input type="text" id="email-smtp-host" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="smtp.domain.com" value="smtp.gmail.com">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">SMTP Port</label>
+              <input type="number" id="email-smtp-port" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="587" value="587">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">SMTP Username (if different)</label>
+              <input type="text" id="email-smtp-user" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="username or email">
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn-cyber">
+              <i class="fa-solid fa-link"></i> Link Email & Sync Ecosystem Identity
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-cyber p-6">
+        <h2 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-xbox-400"></i> Connected Email Identities & Site Housing
+        </h2>
+        <div class="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Provider & Sender Email</th>
+                <th>Display Name</th>
+                <th>Assigned Site / XMG Hub</th>
+                <th>SMTP Server</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="table-emails">
+              <tr><td colspan="6" class="text-center text-slate-500 py-6">Loading connected email accounts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SITES & XMG -->
+    <div id="tab-sites" class="tab-content hidden">
+      <div class="card-cyber p-6 mb-8">
+        <h2 class="font-display font-bold text-lg mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-ps-400"></i> Register Saved Site or XMG Gateway Hub
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Register your Xsite, EZsite store, or XMG Media Gateway to generate ecosystem keys and house site identity.</p>
+
+        <form id="form-add-site" onsubmit="addSite(event)">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Site / Hub Name</label>
+              <input type="text" id="site-name" class="w-full bg-slate-900 border border-slate-700 focus:border-ps-400 focus:ring-1 focus:ring-ps-400 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="e.g. Summer Fitness Xsite / XMG Gateway" required>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Platform Type</label>
+              <select id="site-type" class="w-full bg-slate-900 border border-slate-700 focus:border-ps-400 rounded-lg px-3 py-2.5 text-sm text-white">
+                <option value="xsite">Xsite Landing Page</option>
+                <option value="ezsite">EZsite E-Commerce Store</option>
+                <option value="xmg">XMG Media Gateway / Generator</option>
+                <option value="xstreamflex_hub">XStreamFlex Ecosystem Identity Hub</option>
+                <option value="other">Custom Web Application</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Site Domain URL</label>
+              <input type="text" id="site-domain" class="w-full bg-slate-900 border border-slate-700 focus:border-ps-400 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="https://myfitnesspage.com">
+            </div>
+          </div>
+          <button type="submit" class="btn-cyber bg-ps-600 hover:bg-ps-500 shadow-none">
+            <i class="fa-solid fa-key"></i> Register Site & House Ecosystem Identity
+          </button>
+        </form>
+      </div>
+
+      <div class="card-cyber p-6">
+        <h2 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-code text-ps-400"></i> Saved Sites, XMG Hubs & Key Identities
+        </h2>
+        <div class="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Site Name & Ecosystem ID</th>
+                <th>Type</th>
+                <th>Ecosystem API Key</th>
+                <th>Housed Sender Emails</th>
+                <th>Embed Snippet</th>
+              </tr>
+            </thead>
+            <tbody id="table-sites">
+              <tr><td colspan="5" class="text-center text-slate-500 py-6">Loading registered sites...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SEQUENCES -->
+    <div id="tab-sequences" class="tab-content hidden">
+      <div class="card-cyber p-6 mb-8">
+        <h2 class="font-display font-bold text-lg mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-amber-400"></i> Create Autoresponder Sequence
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Build automated email drip sequences triggered by Xsite form signups, EZsite orders, or XMG media events.</p>
+
+        <form id="form-create-sequence" onsubmit="createSequence(event)">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Target Site / XMG Hub</label>
+              <select id="seq-site-id" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white" required></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Sequence Name</label>
+              <input type="text" id="seq-name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white" placeholder="e.g. Welcome Lead Campaign" required>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Event Trigger</label>
+              <select id="seq-trigger" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white">
+                <option value="lead.signup">lead.signup (Form Signups)</option>
+                <option value="order.completed">order.completed (Purchase Confirmation)</option>
+                <option value="xmg.lead">xmg.lead (XMG Media Lead)</option>
+                <option value="xmg.media_event">xmg.media_event (XMG Engagement)</option>
+                <option value="xmg.conversion">xmg.conversion (XMG Conversion)</option>
+                <option value="cart.abandoned">cart.abandoned (Checkout Drop-off)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-cyber bg-amber-600 hover:bg-amber-500 shadow-none">
+            <i class="fa-solid fa-bolt"></i> Create Autoresponder Sequence
+          </button>
+        </form>
+      </div>
+
+      <div class="card-cyber p-6">
+        <h2 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-amber-400"></i> Active Autoresponder Workflows
+        </h2>
+        <div id="list-sequences" class="space-y-4">Loading sequences...</div>
+      </div>
+    </div>
+
+    <!-- TAB 4: CONTACTS -->
+    <div id="tab-contacts" class="tab-content hidden">
+      <div class="card-cyber p-6">
+        <h2 class="font-display font-bold text-lg mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-address-book text-emerald-400"></i> Captured Leads & Ecosystem Subscribers
+        </h2>
+        <div class="overflow-x-auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Email Address</th>
+                <th>Subscriber Name</th>
+                <th>Source Site / Hub</th>
+                <th>Status</th>
+                <th>Captured Date</th>
+              </tr>
+            </thead>
+            <tbody id="table-contacts">
+              <tr><td colspan="5" class="text-center text-slate-500 py-6">Loading contacts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = '/api/v1';
+
+    const PROVIDERS = {
+      gmail: {
+        name: 'Gmail / Google Workspace',
+        host: 'smtp.gmail.com',
+        port: 587,
+        labelPass: 'Google App Password (16 characters)',
+        placeholderPass: 'e.g. abcd efgh ijkl mnop',
+        badge: '<span class="tag-badge tag-red"><i class="fa-brands fa-google"></i> Gmail</span>',
+        guide: `<strong><i class="fa-brands fa-google text-red-400"></i> How to link Gmail / Google Workspace:</strong><br>
+                1. Enable 2-Step Verification on your <a href="https://myaccount.google.com/security" target="_blank" class="text-xbox-400 underline font-semibold">Google Account</a>.<br>
+                2. Generate a 16-character App Password at <a href="https://myaccount.google.com/apppasswords" target="_blank" class="text-xbox-400 underline font-semibold">myaccount.google.com/apppasswords</a>.<br>
+                3. Enter your Gmail address, display name, and paste the 16-character App Password below.`
+      },
+      outlook: {
+        name: 'Microsoft Outlook / Hotmail',
+        host: 'smtp.office365.com',
+        port: 587,
+        labelPass: 'Outlook Password or App Password',
+        placeholderPass: '••••••••••••',
+        badge: '<span class="tag-badge tag-blue"><i class="fa-brands fa-microsoft"></i> Outlook</span>',
+        guide: `<strong><i class="fa-brands fa-microsoft text-sky-400"></i> How to link Outlook / Hotmail / Office365:</strong><br>
+                1. Enter your Microsoft email (e.g. @outlook.com, @hotmail.com) and display name.<br>
+                2. Enter your account password. If 2-Step Verification is active, generate an App Password in <a href="https://account.live.com/proofs/manage/additional" target="_blank" class="text-ps-400 underline font-semibold">Microsoft Security Settings</a>.`
+      },
+      apple: {
+        name: 'Apple Mail / iCloud',
+        host: 'smtp.mail.me.com',
+        port: 587,
+        labelPass: 'Apple App-Specific Password',
+        placeholderPass: 'e.g. abcd-efgh-ijkl-mnop',
+        badge: '<span class="tag-badge tag-purple"><i class="fa-brands fa-apple"></i> Apple Mail</span>',
+        guide: `<strong><i class="fa-brands fa-apple text-purple-300"></i> How to link Apple Mail / iCloud:</strong><br>
+                1. Sign in to <a href="https://appleid.apple.com" target="_blank" class="text-purple-400 underline font-semibold">appleid.apple.com</a>.<br>
+                2. In "Sign in and Security", select <strong>App-Specific Passwords</strong> and click <i>Generate an app-specific password</i>.<br>
+                3. Enter your iCloud/Me email address and paste the generated App Password below.`
+      },
+      custom: {
+        name: 'Custom SMTP',
+        host: '',
+        port: 587,
+        labelPass: 'SMTP Password',
+        placeholderPass: '••••••••••••',
+        badge: '<span class="tag-badge tag-gray"><i class="fa-solid fa-gears"></i> Custom SMTP</span>',
+        guide: `<strong><i class="fa-solid fa-gears text-slate-400"></i> Custom SMTP Configuration:</strong><br>
+                Enter your custom mail server host, port, credentials, and sender display name.`
+      }
+    };
+
+    function selectProviderPreset(providerKey) {
+      document.querySelectorAll('.provider-card').forEach(card => card.classList.remove('active'));
+      const card = document.getElementById(`preset-${providerKey}`);
+      if (card) card.classList.add('active');
+
+      const info = PROVIDERS[providerKey] || PROVIDERS.custom;
+      document.getElementById('email-provider').value = providerKey;
+      document.getElementById('label-smtp-pass').innerText = info.labelPass;
+      document.getElementById('email-smtp-pass').placeholder = info.placeholderPass;
+      document.getElementById('provider-guide-box').innerHTML = info.guide;
+
+      const customFields = document.getElementById('custom-smtp-fields');
+      if (providerKey === 'custom') {
+        customFields.classList.remove('hidden');
+        customFields.classList.add('grid');
+        document.getElementById('email-smtp-host').value = info.host;
+        document.getElementById('email-smtp-port').value = info.port;
+      } else {
+        customFields.classList.add('hidden');
+        customFields.classList.remove('grid');
+        document.getElementById('email-smtp-host').value = info.host;
+        document.getElementById('email-smtp-port').value = info.port;
+      }
+    }
+
+    function handleEmailTyping(val) {
+      const domain = (val.split('@')[1] || '').toLowerCase();
+      if (domain === 'gmail.com' || domain === 'googlemail.com') selectProviderPreset('gmail');
+      else if (['outlook.com', 'hotmail.com', 'live.com', 'msn.com', 'office365.com'].includes(domain)) selectProviderPreset('outlook');
+      else if (['icloud.com', 'me.com', 'mac.com'].includes(domain)) selectProviderPreset('apple');
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-xbox-500', 'text-xbox-400', 'active');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+      document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.add('hidden');
+        c.classList.remove('block');
+      });
+      
+      const activeBtn = event.currentTarget || event.target;
+      activeBtn.classList.add('border-xbox-500', 'text-xbox-400', 'active');
+      activeBtn.classList.remove('border-transparent', 'text-slate-400');
+
+      const targetTab = document.getElementById(`tab-${tabName}`);
+      targetTab.classList.remove('hidden');
+      targetTab.classList.add('block');
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API_BASE}/stats`);
+        const data = await res.json();
+        document.getElementById('stat-sites').innerText = data.stats.totalSites;
+        document.getElementById('stat-contacts').innerText = data.stats.totalContacts;
+        document.getElementById('stat-sent').innerText = data.stats.emailsSent;
+        document.getElementById('stat-pending').innerText = data.stats.emailsPending;
+        document.getElementById('stat-opens').innerText = data.stats.totalOpens;
+      } catch (err) { console.error('Error loading stats:', err); }
+    }
+
+    async function loadEmails() {
+      try {
+        const res = await fetch(`${API_BASE}/emails`);
+        const data = await res.json();
+        const tbody = document.getElementById('table-emails');
+        if (!data.emails || data.emails.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-slate-500 py-6">No email accounts linked yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.emails.map(e => {
+          let providerKey = e.provider;
+          if (!providerKey) {
+            const h = (e.smtp_host || '').toLowerCase();
+            if (h.includes('gmail')) providerKey = 'gmail';
+            else if (h.includes('office365') || h.includes('outlook')) providerKey = 'outlook';
+            else if (h.includes('me.com') || h.includes('icloud')) providerKey = 'apple';
+            else if (h.includes('yahoo')) providerKey = 'yahoo';
+            else providerKey = 'custom';
+          }
+          const badge = (PROVIDERS[providerKey] || PROVIDERS.custom).badge;
+
+          return `
+            <tr>
+              <td>
+                <div class="flex items-center gap-2">
+                  ${badge}
+                  <strong class="text-white">${e.email}</strong>
+                </div>
+              </td>
+              <td>${e.sender_name}</td>
+              <td><span class="tag-badge ${e.site_name ? 'tag-purple' : 'tag-gray'}">${e.site_name || 'Global Ecosystem'}</span></td>
+              <td><code>${e.smtp_host}:${e.smtp_port}</code></td>
+              <td>
+                <span class="tag-badge ${e.is_verified ? 'tag-green' : 'tag-red'}">
+                  ${e.is_verified ? '<i class="fa-solid fa-check"></i> Verified' : '<i class="fa-solid fa-triangle-exclamation"></i> Unverified'}
+                </span>
+              </td>
+              <td class="space-x-2">
+                <button class="btn-secondary-cyber" onclick="testConnection('${e.id}')">
+                  <i class="fa-solid fa-bolt text-amber-400"></i> Test
+                </button>
+                <button class="btn-danger-cyber" onclick="unlinkEmail('${e.id}', '${e.email}')">
+                  <i class="fa-solid fa-trash-can"></i> Unlink
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) { console.error('Error loading emails:', err); }
+    }
+
+    async function testConnection(id) {
+      try {
+        const res = await fetch(`${API_BASE}/emails/${id}/test`, { method: 'POST' });
+        const data = await res.json();
+        alert(data.message || (data.success ? 'Connection verified successfully!' : 'Connection test failed.'));
+        loadEmails();
+      } catch (err) { alert('Failed to verify connection: ' + err.message); }
+    }
+
+    async function unlinkEmail(id, email) {
+      if (!confirm(`Are you sure you want to unlink ${email}?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/emails/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        alert(data.message || 'Email unlinked.');
+        loadEmails();
+      } catch (err) { alert('Failed to unlink email: ' + err.message); }
+    }
+
+    async function linkEmail(e) {
+      e.preventDefault();
+      const providerKey = document.getElementById('email-provider').value;
+      const siteId = document.getElementById('email-site-id').value;
+
+      const payload = {
+        provider: providerKey,
+        email: document.getElementById('email-address').value,
+        senderName: document.getElementById('email-sender-name').value,
+        siteId: siteId || null,
+        smtpPass: document.getElementById('email-smtp-pass').value,
+        smtpHost: document.getElementById('email-smtp-host').value,
+        smtpPort: document.getElementById('email-smtp-port').value,
+        smtpUser: document.getElementById('email-smtp-user').value
+      };
+      try {
+        const res = await fetch(`${API_BASE}/emails/connect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        alert(data.message || 'Email identity housed and linked successfully!');
+        loadEmails();
+        loadSites();
+        document.getElementById('form-link-email').reset();
+        selectProviderPreset('gmail');
+      } catch (err) { alert('Error linking email: ' + err.message); }
+    }
+
+    async function loadSites() {
+      try {
+        const res = await fetch(`${API_BASE}/sites`);
+        const data = await res.json();
+        const tbody = document.getElementById('table-sites');
+        const seqSelect = document.getElementById('seq-site-id');
+        const emailSiteSelect = document.getElementById('email-site-id');
+
+        if (!data.sites || data.sites.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-slate-500 py-6">No sites registered yet.</td></tr>';
+          seqSelect.innerHTML = '<option value="">No sites available</option>';
+          emailSiteSelect.innerHTML = '<option value="">Global Ecosystem (All Sites)</option>';
+          return;
+        }
+
+        seqSelect.innerHTML = data.sites.map(s => `<option value="${s.id}">${s.name} (${s.type.toUpperCase()})</option>`).join('');
+        emailSiteSelect.innerHTML = '<option value="">Global Ecosystem (All Sites)</option>' + 
+          data.sites.map(s => `<option value="${s.id}">${s.name} (${s.type.toUpperCase()})</option>`).join('');
+
+        tbody.innerHTML = data.sites.map(s => `
+          <tr>
+            <td>
+              <div><strong class="text-white">${s.name}</strong></div>
+              <div class="text-[11px] text-slate-400 font-mono">${s.ecosystem_id || ''}</div>
+            </td>
+            <td><span class="tag-badge ${s.type === 'xmg' ? 'tag-purple' : 'tag-blue'}">${s.type.toUpperCase()}</span></td>
+            <td><code>${s.api_key}</code></td>
+            <td><span class="tag-badge tag-green">${s.linked_emails_count || 0} Sender Emails</span></td>
+            <td><code>&lt;script src="${location.origin}/sdk/xmail.js" data-site-key="${s.api_key}"&gt;&lt;/script&gt;</code></td>
+          </tr>
+        `).join('');
+      } catch (err) { console.error('Error loading sites:', err); }
+    }
+
+    async function addSite(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('site-name').value,
+        type: document.getElementById('site-type').value,
+        domain: document.getElementById('site-domain').value
+      };
+      try {
+        await fetch(`${API_BASE}/sites`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        alert('Site identity registered and synced successfully!');
+        loadSites();
+        loadStats();
+        document.getElementById('form-add-site').reset();
+      } catch (err) { alert('Error registering site: ' + err.message); }
+    }
+
+    async function loadSequences() {
+      try {
+        const res = await fetch(`${API_BASE}/sequences`);
+        const data = await res.json();
+        const container = document.getElementById('list-sequences');
+
+        if (!data.sequences || data.sequences.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-sm">No autoresponder sequences created yet.</p>';
+          return;
+        }
+
+        container.innerHTML = data.sequences.map(seq => `
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-white text-base">${seq.name}</h3>
+              <span class="tag-badge tag-blue">${seq.event_trigger}</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">Target Site: <strong class="text-slate-200">${seq.site_name || 'All Sites'}</strong></p>
+            <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Workflow Steps:</h4>
+            ${seq.steps.length === 0 ? '<p class="text-xs text-slate-500 mb-3">No email steps added yet.</p>' : `
+              <ul class="space-y-1.5 text-xs text-slate-300 mb-4 pl-2">
+                ${seq.steps.map(st => `<li><i class="fa-solid fa-angle-right text-xbox-400 mr-1.5"></i> <strong>Step ${st.step_number}</strong> (Delay: ${st.delay_minutes} mins) - Subject: "${st.subject}"</li>`).join('')}
+              </ul>
+            `}
+            <button class="btn-secondary-cyber" onclick="promptAddStep('${seq.id}')">
+              <i class="fa-solid fa-plus text-xbox-400"></i> Add Email Step
+            </button>
+          </div>
+        `).join('');
+      } catch (err) { console.error('Error loading sequences:', err); }
+    }
+
+    async function createSequence(e) {
+      e.preventDefault();
+      const payload = {
+        siteId: document.getElementById('seq-site-id').value,
+        name: document.getElementById('seq-name').value,
+        eventTrigger: document.getElementById('seq-trigger').value
+      };
+      try {
+        await fetch(`${API_BASE}/sequences`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        alert('Sequence created!');
+        loadSequences();
+        document.getElementById('form-create-sequence').reset();
+      } catch (err) { alert('Error creating sequence: ' + err.message); }
+    }
+
+    async function promptAddStep(sequenceId) {
+      const subject = prompt('Enter Email Subject Line (use {{first_name}} for dynamic tags):');
+      if (!subject) return;
+      const delayMinutes = prompt('Enter delay in minutes before sending (0 for immediate):', '0');
+      const bodyHtml = prompt('Enter Email HTML Body content:', '<h3>Hello {{first_name}}!</h3><p>Thank you for signing up on {{site_name}}!</p>');
+
+      try {
+        await fetch(`${API_BASE}/sequences/${sequenceId}/steps`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject,
+            delayMinutes: parseInt(delayMinutes, 10),
+            bodyHtml
+          })
+        });
+        alert('Step added!');
+        loadSequences();
+      } catch (err) { alert('Error adding step: ' + err.message); }
+    }
+
+    async function loadContacts() {
+      try {
+        const res = await fetch(`${API_BASE}/contacts`);
+        const data = await res.json();
+        const tbody = document.getElementById('table-contacts');
+
+        if (!data.contacts || data.contacts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-slate-500 py-6">No contacts captured yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.contacts.map(c => `
+          <tr>
+            <td><strong class="text-white">${c.email}</strong></td>
+            <td>${c.first_name || ''} ${c.last_name || ''}</td>
+            <td>${c.site_name || 'Unknown'}</td>
+            <td><span class="tag-badge tag-green">${c.status}</span></td>
+            <td class="text-xs text-slate-400">${new Date(c.created_at).toLocaleDateString()}</td>
+          </tr>
+        `).join('');
+      } catch (err) { console.error('Error loading contacts:', err); }
+    }
+
+    function updateThemeUI() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+      if (icon && text) {
+        if (isDark) {
+          icon.className = 'fa-solid fa-sun text-amber-400';
+          text.innerText = 'Light Mode';
+        } else {
+          icon.className = 'fa-solid fa-moon text-indigo-500';
+          text.innerText = 'Dark Mode';
+        }
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeUI();
+    }
+
+    // Init Page
+    updateThemeUI();
+    selectProviderPreset('gmail');
+    loadStats();
+    loadEmails();
+    loadSites();
+    loadSequences();
+    loadContacts();
+  </script>
+</body>
+</html>

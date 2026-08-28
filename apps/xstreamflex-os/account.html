@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xstreamflex // Member Account</title>
+    <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="os-sdk.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            glow: '#22c55e',
+                            xbox: '#107C10',
+                            xboxHover: '#0e6b0e',
+                            darkBg: '#090a0f',
+                            darkCard: '#11131e',
+                            darkBorder: '#1e293b',
+                            panel: '#11131e'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.6; }
+        }
+        .animate-pulse-slow { animation: pulse-slow 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .rocket-glow { filter: drop-shadow(0 0 12px rgba(34, 197, 94, 0.4)); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-brand-darkBg dark:text-gray-100 min-h-screen flex flex-col justify-between font-sans relative overflow-x-hidden transition-colors duration-300">
+
+    <!-- Background Ambient Glows -->
+    <div class="absolute top-0 left-1/4 w-[600px] h-[600px] bg-brand-xbox/10 dark:bg-brand-xbox/20 rounded-full blur-[160px] pointer-events-none animate-pulse-slow"></div>
+
+    <!-- Header Navigation Bar (xstreamflex.com DNA) -->
+    <nav class="border-b border-slate-200 dark:border-gray-800/60 backdrop-blur-md bg-white/70 dark:bg-brand-darkBg/70 sticky top-0 z-50 transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="xsite.html" class="flex items-center gap-2">
+                    <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="rocket promise" class="h-8 md:h-10 w-auto object-contain inline-block">
+                    <span class="text-sm tracking-[0.25em] font-black uppercase text-slate-800 dark:text-white bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:via-gray-200 dark:to-gray-400 bg-clip-text text-transparent hidden sm:inline-block">XSTREAM FLEX</span>
+                </a>
+                <span class="text-[9px] uppercase tracking-widest font-mono px-2 py-0.5 rounded border border-brand-xbox/30 text-brand-xbox dark:border-brand-glow/30 dark:text-brand-glow bg-brand-glow/5 hidden md:inline-block">Genesis Engine v2.5</span>
+            </div>
+            
+            <!-- Mid-Nav Desktop Links -->
+            <div class="hidden lg:flex items-center gap-5 text-xs font-semibold tracking-wide font-mono">
+                <a href="account.html" class="text-emerald-400 font-bold border-b border-emerald-400 pb-0.5">📊 Account</a>
+                <a href="xsite.html" class="text-slate-400 hover:text-white transition-colors">⚡ XSITE Engine</a>
+                <a href="ezsite.html" class="text-slate-400 hover:text-white transition-colors">🪄 EZsite Wizard</a>
+                <a href="xmg.html" class="text-slate-400 hover:text-white transition-colors">🖼️ XMG Vault</a>
+                <a href="xmail.html" class="text-slate-400 hover:text-white transition-colors">✉️ XMAIL Engine</a>
+            </div>
+
+            <div class="flex items-center gap-4 text-xs font-mono">
+                <!-- Theme Toggle Button -->
+                <button id="uiThemeToggle" type="button" class="p-2 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-600 dark:text-amber-400 transition-all duration-200 flex items-center justify-center focus:outline-none" title="Toggle System Theme">
+                    <!-- Sun Icon -->
+                    <svg id="sunIcon" class="w-5 h-5 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path>
+                    </svg>
+                    <!-- Moon Icon -->
+                    <svg id="moonIcon" class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+                <button id="logoutBtn" type="button" class="text-slate-500 hover:text-rose-500 dark:text-gray-400 dark:hover:text-rose-400 transition-colors">
+                    Logout
+                </button>
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" type="button" class="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/5 rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden border-b border-slate-200 dark:border-gray-800 bg-white dark:bg-brand-darkBg px-6 py-4 space-y-3 shadow-lg">
+            <a href="https://xstreamflex.com/" class="block text-slate-600 dark:text-slate-300 hover:text-brand-xbox">Home</a>
+            <a href="https://xstreamflex.com/#about" class="block text-slate-600 dark:text-slate-300 hover:text-brand-xbox">About</a>
+            <a href="https://xstreamflex.com/#products" class="block text-slate-600 dark:text-slate-300 hover:text-brand-xbox">Products</a>
+            <a href="https://xstreamflex.com/#blog" class="block text-slate-600 dark:text-slate-300 hover:text-brand-xbox">Blog</a>
+            <a href="https://xstreamflex.com/#contact" class="block text-slate-600 dark:text-slate-300 hover:text-brand-xbox">Contact</a>
+            <a href="xsite.html" class="block text-slate-600 dark:text-slate-300 hover:text-brand-xbox font-bold">XSITE Studio</a>
+            <a href="account.html" class="block text-brand-xbox dark:text-brand-glow font-bold">Account</a>
+            <hr class="border-slate-100 dark:border-gray-800">
+            <a href="#login" onclick="switchPortalTab('login')" class="block text-xs text-slate-500 hover:underline">Member Login</a>
+            <a href="#activate" onclick="switchPortalTab('activate')" class="block text-xs text-slate-500 hover:underline">Activate Key</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl mx-auto px-6 py-10 flex-1 relative z-10 w-full space-y-8">
+        
+        <!-- Sub-View Navigation Tabs Bar -->
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-gray-800 pb-3 font-mono text-xs overflow-x-auto gap-4">
+            <div class="flex items-center gap-2">
+                <button onclick="switchPortalTab('account')" id="tab-btn-account" class="px-4 py-2 rounded-lg font-bold transition-all bg-brand-xbox/10 text-brand-xbox dark:bg-brand-glow/10 dark:text-brand-glow border border-brand-xbox/30 dark:border-brand-glow/30">
+                    📊 Account Overview
+                </button>
+                <button onclick="switchPortalTab('login')" id="tab-btn-login" class="px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                    🔑 Member Login
+                </button>
+                <button onclick="switchPortalTab('activate')" id="tab-btn-activate" class="px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                    ⚡ Activate Key
+                </button>
+            </div>
+            <a id="launchStudioBtn" href="xsite.html" class="bg-gradient-to-r from-brand-glow to-emerald-500 text-black font-black text-xs px-5 py-2 rounded-lg uppercase tracking-wider shadow-md hover:opacity-90 transition-all font-mono shrink-0 hidden sm:inline-block">
+                ⚡ Open XSITE Studio
+            </a>
+        </div>
+
+        <!-- VIEW 1: ACCOUNT OVERVIEW -->
+        <div id="portal-view-account" class="space-y-8">
+            <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 md:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-300 relative overflow-hidden">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">⚡ Account Online</span>
+                        <span id="tierBadge" class="text-[10px] font-mono uppercase tracking-wider bg-slate-100 dark:bg-black/50 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800 px-2.5 py-0.5 rounded-full font-bold">Pro Plan</span>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                        <span>Xstreamflex Member Account</span>
+                    </h1>
+                    <p id="userEmailDisplay" class="text-xs font-mono text-slate-500 dark:text-gray-400">Connected account: loading...</p>
+                    <p class="text-xs text-slate-600 dark:text-gray-400 leading-relaxed pt-1">
+                        Your complete web identity is live. Launch multi-page sites, deploy directly to GitHub, and take full ownership of your code with zero restrictions.
+                    </p>
+                </div>
+
+                <a id="cardLaunchStudioBtn" href="xsite.html" class="bg-gradient-to-r from-brand-glow to-emerald-500 hover:from-brand-glow hover:to-brand-glow text-black font-black text-xs px-6 py-4 rounded-xl uppercase tracking-wider shadow-xl hover:scale-[1.02] transition-all text-center font-mono shrink-0 flex items-center justify-center gap-2">
+                    <span>🚀 Launch XSITE Studio</span>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-lg space-y-3">
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-gray-400">
+                        <span class="uppercase tracking-wider">Workspace Key</span>
+                        <span>🔑</span>
+                    </div>
+                    <div id="keyDisplay" class="text-base font-mono font-bold text-slate-900 dark:text-brand-glow break-all bg-slate-50 dark:bg-black/50 p-3 rounded-xl border border-slate-200 dark:border-gray-800">
+                        XSITE-XXXX-XXXX
+                    </div>
+                    <button id="copyKeyBtn" type="button" class="w-full bg-slate-100 hover:bg-slate-200 dark:bg-black/40 dark:hover:bg-black/80 text-slate-700 dark:text-gray-300 border border-slate-200 dark:border-gray-800 py-2.5 rounded-lg text-xs font-mono transition-colors font-bold">
+                        📋 Copy Key
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-lg space-y-3">
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-gray-400">
+                        <span class="uppercase tracking-wider">Monthly Site Tokens</span>
+                        <span>⚡</span>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="creditCount" class="text-3xl font-black text-slate-900 dark:text-white">0</span>
+                        <span class="text-xs font-mono text-slate-500 dark:text-gray-400">tokens / month</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-gray-400">Generates full multi-page ecosystem site trees (Index, About, Shop, Blog, Contact).</p>
+                </div>
+
+                <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-lg space-y-3">
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-gray-400">
+                        <span class="uppercase tracking-wider">Token Top-Up Perk</span>
+                        <span>💎</span>
+                    </div>
+                    <div class="text-xs text-slate-700 dark:text-gray-300 font-mono space-y-1.5">
+                        <div class="text-emerald-500 font-bold">👉 LTD: 50% OFF Top-Ups</div>
+                        <div class="text-[11px] text-slate-500 dark:text-gray-400">10 tokens: $4.99 ($2.50 LTD)</div>
+                        <div class="text-[11px] text-slate-500 dark:text-gray-400">20 tokens: $8.99 ($4.50 LTD)</div>
+                        <div class="text-[11px] text-slate-500 dark:text-gray-400">50 tokens: $19.99 ($10 LTD)</div>
+            <!-- GITHUB WORKSPACE PERSISTENCE ENGINE & SAVED PROJECTS HUB -->
+            <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 dark:border-gray-800 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>📦 GitHub Projects & Workspace Persistence Engine</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-gray-400">Pull existing website repositories into XSITES Studio to edit, or manage saved project trees.</p>
+                    </div>
+                    <span class="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold uppercase">
+                        🟢 GitHub Pull/Push Sync Active
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Pull Repo Input Card -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3">
+                        <label for="accountRepoInput" class="block text-xs font-bold text-slate-800 dark:text-gray-200">
+                            📥 Load Existing GitHub Repository
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="accountRepoInput" placeholder="e.g. xsite-mybrand or username/repo" class="flex-1 bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 dark:text-emerald-400 focus:outline-none focus:border-emerald-400">
+                            <button type="button" onclick="loadAccountGithubRepo()" class="bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs px-4 rounded-lg font-mono shadow transition cursor-pointer shrink-0">
+                                Load Project
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-gray-500">Fetches all pages from GitHub into XSITES Studio for live visual inspection and editing.</p>
+                    </div>
+
+                    <!-- Personal PAT Input Card -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3">
+                        <label for="accountPatInput" class="block text-xs font-bold text-slate-800 dark:text-gray-200">
+                            🔑 Personal GitHub Token (PAT)
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="password" id="accountPatInput" placeholder="ghp_..." class="flex-1 bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-2 text-xs font-mono text-slate-800 dark:text-amber-400 focus:outline-none focus:border-amber-400">
+                            <button type="button" onclick="saveAccountGithubPat()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 rounded-lg font-mono transition cursor-pointer shrink-0">
+                                Save Token
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-gray-500">Required if deploying to or pulling from your private GitHub repositories.</p>
+                    </div>
+                </div>
+
+                <!-- Projects List Container -->
+                <div id="accountProjectsList" class="space-y-2 pt-2"></div>
+            </div>
+
+            <!-- ENCRYPTED API KEY VAULT HUB -->
+            <div class="bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-200 dark:border-gray-800 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>🔐 Central Encrypted API Key Vault</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 dark:text-gray-400">Keys stored here are accessible across XSITE, XMG, and XMAIL via XSTREAMFLEX OS.</p>
+                    </div>
+                    <button type="button" onclick="saveKeyVaultFromUI()" class="bg-gradient-to-r from-brand-glow to-emerald-500 hover:from-brand-glow hover:to-brand-glow text-black font-extrabold text-xs px-5 py-2.5 rounded-xl font-mono shadow-md transition cursor-pointer">
+                        💾 Save All Vault Keys
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Payments Keys -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3">
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-emerald-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                            <span>💳 Payment Processors (Stripe & PayPal)</span>
+                        </h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">Stripe Publishable Key</label>
+                                <input type="password" id="vault_stripe_pub" placeholder="pk_live_..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-emerald-400">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">Stripe Secret Key</label>
+                                <input type="password" id="vault_stripe_sec" placeholder="sk_live_..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-emerald-400">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">PayPal Client ID</label>
+                                <input type="password" id="vault_paypal_id" placeholder="Client ID..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-emerald-400">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Provider Keys -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3">
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-purple-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🤖 AI & LLM Provider Keys</span>
+                        </h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">Google Gemini API Key</label>
+                                <input type="password" id="vault_gemini" placeholder="AIzaSy..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-purple-400">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">Groq API Key</label>
+                                <input type="password" id="vault_groq" placeholder="gsk_..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-purple-400">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">OpenAI / Claude API Key</label>
+                                <input type="password" id="vault_openai" placeholder="sk-..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-purple-400">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- External CRM Keys -->
+                    <div class="bg-slate-50 dark:bg-black/50 p-4 rounded-xl border border-slate-200 dark:border-gray-800 space-y-3 md:col-span-2">
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-blue-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                            <span>✉️ External CRM & Integration Keys</span>
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">InfluencerSoft API Key</label>
+                                <input type="password" id="vault_influencersoft" placeholder="API Key..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">ActiveCampaign / HubSpot Key</label>
+                                <input type="password" id="vault_activecampaign" placeholder="Key..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-blue-400">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-mono text-slate-500 dark:text-gray-400">Mailchimp / External API Key</label>
+                                <input type="password" id="vault_mailchimp" placeholder="Key..." class="w-full bg-white dark:bg-black border border-slate-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-800 dark:text-gray-200 focus:outline-none focus:border-blue-400">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: UNIFIED MEMBER PORTAL LOGIN & SIGNUP -->
+        <div id="portal-view-login" class="hidden max-w-md mx-auto py-6 space-y-6">
+            <div class="w-full bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-8 shadow-2xl space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-gray-800 flex items-center justify-center text-xl">
+                        ⚡
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Xstreamflex Unified Login</h2>
+                    <p class="text-xs text-slate-500 dark:text-gray-400">One account for XSITE, XMG Media Vault, and XMAIL Autoresponder.</p>
+                </div>
+
+                <!-- Sub-tabs: Login / Register -->
+                <div class="flex border-b border-slate-200 dark:border-gray-800 font-mono text-xs text-center">
+                    <button type="button" id="authModeLoginBtn" onclick="switchAuthMode('login')" class="w-1/2 py-2.5 font-bold border-b-2 border-brand-glow text-brand-glow">Sign In</button>
+                    <button type="button" id="authModeRegisterBtn" onclick="switchAuthMode('register')" class="w-1/2 py-2.5 text-slate-500 hover:text-slate-300">Create Account</button>
+                </div>
+
+                <form id="unifiedAuthForm" class="space-y-4">
+                    <div id="nameField" class="hidden">
+                        <label for="regNameInput" class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-1">Full Name</label>
+                        <input type="text" id="regNameInput" placeholder="Jane Doe" class="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-800 dark:text-brand-glow focus:outline-none focus:border-brand-glow/50" />
+                    </div>
+
+                    <div>
+                        <label for="loginEmailInput" class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-1">Email Address</label>
+                        <input type="email" id="loginEmailInput" required placeholder="user@example.com" class="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-800 dark:text-brand-glow focus:outline-none focus:border-brand-glow/50" />
+                    </div>
+
+                    <div>
+                        <label for="loginPassInput" class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-1">Password</label>
+                        <input type="password" id="loginPassInput" required placeholder="••••••••••••" class="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-800 dark:text-brand-glow focus:outline-none focus:border-brand-glow/50" />
+                    </div>
+
+                    <div id="legacyKeyField" class="hidden">
+                        <label for="regLegacyKeyInput" class="block text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-gray-400 mb-1">Legacy Activation Key (Optional)</label>
+                        <input type="text" id="regLegacyKeyInput" placeholder="XSITE-PRO-XXXXX" class="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-gray-800 rounded-xl px-4 py-3 text-xs font-mono text-slate-800 dark:text-brand-glow focus:outline-none focus:border-brand-glow/50" />
+                    </div>
+
+                    <div id="authFeedback" class="hidden text-xs font-mono p-3 rounded-lg border text-center"></div>
+
+                    <button type="submit" id="authSubmitBtn" class="w-full bg-gradient-to-r from-brand-glow to-emerald-500 text-black font-black text-xs py-3.5 rounded-xl uppercase tracking-wider shadow-lg hover:opacity-90 transition-opacity font-mono flex items-center justify-center gap-2">
+                        <span id="authSubmitBtnText">Sign In to Ecosystem</span>
+                    </button>
+                </form>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-200 dark:border-gray-800"></div>
+                    <span class="flex-shrink mx-4 text-[10px] font-mono uppercase tracking-widest text-slate-500">Or Secure OAuth</span>
+                    <div class="flex-grow border-t border-slate-200 dark:border-gray-800"></div>
+                </div>
+
+                <!-- Modern OAuth 2.0 Login Providers -->
+                <div class="grid grid-cols-3 gap-2 font-mono text-xs">
+                    <button type="button" onclick="XstreamFlexOS.loginWithOAuth('google').then(()=>window.location.reload())" class="bg-slate-100 hover:bg-slate-200 dark:bg-black/50 dark:hover:bg-slate-800 border border-slate-300 dark:border-gray-700 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-[11px] text-slate-800 dark:text-gray-200">
+                        <span>🔍</span>
+                        <span>Google</span>
+                    </button>
+                    <button type="button" onclick="XstreamFlexOS.loginWithOAuth('github').then(()=>window.location.reload())" class="bg-slate-100 hover:bg-slate-200 dark:bg-black/50 dark:hover:bg-slate-800 border border-slate-300 dark:border-gray-700 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-[11px] text-slate-800 dark:text-gray-200">
+                        <span>🐙</span>
+                        <span>GitHub</span>
+                    </button>
+                    <button type="button" onclick="XstreamFlexOS.loginWithPasskey().then(()=>window.location.reload())" class="bg-slate-100 hover:bg-slate-200 dark:bg-black/50 dark:hover:bg-slate-800 border border-slate-300 dark:border-gray-700 py-2.5 rounded-xl font-bold transition flex items-center justify-center gap-1.5 text-[11px] text-slate-800 dark:text-gray-200">
+                        <span>🔑</span>
+                        <span>Passkey</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: ACTIVATE KEY -->
+        <div id="portal-view-activate" class="hidden max-w-lg mx-auto py-6 space-y-6">
+            <div class="w-full bg-white dark:bg-brand-panel border border-slate-200 dark:border-gray-800 rounded-2xl p-8 shadow-2xl transition-all duration-300">
+                <div id="loadingState" class="space-y-6 text-center">
+                    <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
+                        <div class="absolute inset-0 rounded-full border-4 border-brand-glow/20 border-t-brand-glow animate-spin"></div>
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Activating Your XSITES Account...</h2>
+                        <p id="loadingSubtitle" class="text-xs text-slate-500 dark:text-gray-400">Verifying purchase credentials and generating your custom activation key.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer (xstreamflex.com DNA) -->
+    <footer class="bg-slate-900 text-slate-400 dark:bg-black dark:text-slate-500 pt-16 pb-12 border-t border-slate-800 relative z-20">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div class="space-y-4">
+                <div class="flex items-center gap-2">
+                    <img src="https://drive.google.com/thumbnail?id=1Kx_7yk4oMoHRWAn9WcRYD39qjLMkvMx7&sz=w1000" alt="rocket promise" class="h-8 w-auto object-contain inline-block filter brightness-110">
+                    <span class="text-white font-black tracking-widest text-sm">XSITES</span>
+                </div>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    Xstreamflex is on a mission to grant true digital independence. Deployed to GitHub, owned by you. Forever.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Core Ecosystem</h4>
+                <ul class="space-y-2.5 text-xs">
+                    <li><a href="https://xstreamflex.com/" class="hover:text-white transition-colors">Home</a></li>
+                    <li><a href="https://xstreamflex.com/#about" class="hover:text-white transition-colors">About</a></li>
+                    <li><a href="https://xstreamflex.com/#products" class="hover:text-white transition-colors">Products</a></li>
+                    <li><a href="https://xstreamflex.com/#blog" class="hover:text-white transition-colors">Blog</a></li>
+                    <li><a href="https://xstreamflex.com/#contact" class="hover:text-white transition-colors">Contact</a></li>
+                    <li><a href="xsite" class="hover:text-white transition-colors">XSITE Studio</a></li>
+                    <li><a href="account" class="hover:text-white transition-colors">Account Portal</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Access & Support</h4>
+                <ul class="space-y-2.5 text-xs">
+                    <li><a href="#login" onclick="switchPortalTab('login')" class="hover:text-white transition-colors">Member Login</a></li>
+                    <li><a href="#activate" onclick="switchPortalTab('activate')" class="hover:text-white transition-colors">Activate Key</a></li>
+                    <li><a href="mailto:support@xstreamflex.com" class="hover:text-white transition-colors">Contact Support</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-xs uppercase tracking-widest mb-4">Regulatory & Privacy</h4>
+                <ul class="space-y-2.5 text-xs">
+                    <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 pt-8 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-[10px] font-mono uppercase tracking-widest text-slate-600">
+            <p>© <span id="currentYear">2026</span> Xstreamflex. All systems nominal. Launching to the moon.</p>
+            <p>Designed with love for the least capable, least knowledgeable.</p>
+        </div>
+    </footer>
+
+    <script>
+        const WORKER_BASE = "https://xsites-backend-worker.xstreamflex.workers.dev";
+
+        function getApiEndpoint(path) {
+            if (window.location.hostname === 'xstreamflex.com' || window.location.hostname.endsWith('.xstreamflex.com')) {
+                return path;
+            }
+            return `${WORKER_BASE}${path}`;
+        }
+
+        async function safeJsonFetch(path, bodyData) {
+            const url = getApiEndpoint(path);
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData)
+            });
+
+            const contentType = res.headers.get('content-type') || '';
+            if (!res.ok || !contentType.includes('application/json')) {
+                const text = await res.text();
+                throw new Error(`Endpoint error (${res.status}): Worker service returned invalid response format.`);
+            }
+
+            return await res.json();
+        }
+
+        let currentAuthMode = 'login';
+        window.switchAuthMode = function(mode) {
+            currentAuthMode = mode;
+            const loginBtn = document.getElementById('authModeLoginBtn');
+            const regBtn = document.getElementById('authModeRegisterBtn');
+            const nameField = document.getElementById('nameField');
+            const legacyKeyField = document.getElementById('legacyKeyField');
+            const btnText = document.getElementById('authSubmitBtnText');
+
+            if (mode === 'register') {
+                if (loginBtn) loginBtn.className = "w-1/2 py-2.5 text-slate-500 hover:text-slate-300";
+                if (regBtn) regBtn.className = "w-1/2 py-2.5 font-bold border-b-2 border-brand-glow text-brand-glow";
+                if (nameField) nameField.classList.remove('hidden');
+                if (legacyKeyField) legacyKeyField.classList.remove('hidden');
+                if (btnText) btnText.textContent = "Create Account & Sign In";
+            } else {
+                if (regBtn) regBtn.className = "w-1/2 py-2.5 text-slate-500 hover:text-slate-300";
+                if (loginBtn) loginBtn.className = "w-1/2 py-2.5 font-bold border-b-2 border-brand-glow text-brand-glow";
+                if (nameField) nameField.classList.add('hidden');
+                if (legacyKeyField) legacyKeyField.classList.add('hidden');
+                if (btnText) btnText.textContent = "Sign In to Ecosystem";
+            }
+        };
+
+        window.switchPortalTab = function(tabName) {
+            const tabs = ['account', 'login', 'activate'];
+
+            tabs.forEach(t => {
+                const view = document.getElementById(`portal-view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = "px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5";
+            });
+
+            const activeView = document.getElementById(`portal-view-${tabName}`);
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.className = "px-4 py-2 rounded-lg font-bold transition-all bg-brand-xbox/10 text-brand-xbox dark:bg-brand-glow/10 dark:text-brand-glow border border-brand-xbox/30 dark:border-brand-glow/30";
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const yearEl = document.getElementById('currentYear');
+            if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+            // Theme toggle
+            const themeToggleBtn = document.getElementById('uiThemeToggle') || document.getElementById('themeToggleBtn');
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+
+            function applyTheme(isDark) {
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('xsites_theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    if (sunIcon) sunIcon.classList.remove('hidden');
+                    if (moonIcon) moonIcon.classList.add('hidden');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('xsites_theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    if (sunIcon) sunIcon.classList.add('hidden');
+                    if (moonIcon) moonIcon.classList.remove('hidden');
+                }
+            }
+
+            const savedTheme = localStorage.getItem('xsites_theme') || localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', () => {
+                    applyTheme(!document.documentElement.classList.contains('dark'));
+                });
+            }
+
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            const hash = window.location.hash.replace('#', '');
+            if (hash && ['account', 'login', 'activate'].includes(hash)) {
+                switchPortalTab(hash);
+            } else {
+                switchPortalTab('account');
+            }
+
+            // ACCOUNT VERIFICATION LOGIC
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeKey = urlParams.get('key') || localStorage.getItem('xsites_key');
+            const userEmailDisplay = document.getElementById('userEmailDisplay');
+            const tierBadge = document.getElementById('tierBadge');
+            const keyDisplay = document.getElementById('keyDisplay');
+            const creditCount = document.getElementById('creditCount');
+            const copyKeyBtn = document.getElementById('copyKeyBtn');
+            const launchStudioBtn = document.getElementById('launchStudioBtn');
+            const cardLaunchStudioBtn = document.getElementById('cardLaunchStudioBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            // Real-time credit sync via UnifiedAuth
+            if (window.UnifiedAuth) {
+                UnifiedAuth.syncCredits().then(res => {
+                    if (res && res.success && res.user) {
+                        if (userEmailDisplay) userEmailDisplay.textContent = `Connected account: ${res.user.email || 'Registered User'}`;
+                        if (tierBadge) tierBadge.textContent = res.user.isAdmin ? '👑 Master Admin' : (res.user.tierId || 'Pro Plan');
+                        if (creditCount) creditCount.textContent = res.user.credits !== undefined ? res.user.credits : 3;
+                    }
+                });
+            }
+
+            if (activeKey) {
+                keyDisplay.textContent = activeKey;
+                if (launchStudioBtn) launchStudioBtn.href = `xsite?key=${activeKey}`;
+                if (cardLaunchStudioBtn) cardLaunchStudioBtn.href = `xsite?key=${activeKey}`;
+
+                try {
+                    const data = await safeJsonFetch('/verify-license', { licenseKey: activeKey });
+                    if (data && data.success) {
+                        if (userEmailDisplay && !userEmailDisplay.textContent.includes('@')) userEmailDisplay.textContent = `Connected account: ${data.customerEmail || 'Registered User'}`;
+                        if (tierBadge && tierBadge.textContent === 'Pro Plan') tierBadge.textContent = data.tierName || 'Activated Tier';
+                        if (creditCount && creditCount.textContent === '3') creditCount.textContent = data.credits !== undefined ? data.credits : data.pagesPerMonth;
+                        localStorage.setItem('xsites_key', data.key);
+                    }
+                } catch (err) {
+                    console.warn('[Account Verification Notice]', err.message);
+                }
+            } else if (userEmailDisplay && !userEmailDisplay.textContent.includes('@')) {
+                userEmailDisplay.textContent = 'No key connected. Please log in or activate a key.';
+            }
+
+            if (copyKeyBtn && activeKey) {
+                copyKeyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(activeKey);
+                    copyKeyBtn.textContent = '✓ Key Copied!';
+                    setTimeout(() => { copyKeyBtn.textContent = '📋 Copy Key'; }, 2000);
+                });
+            }
+
+            // UNIFIED AUTH FORM SUBMIT
+            const unifiedAuthForm = document.getElementById('unifiedAuthForm');
+            const authFeedback = document.getElementById('authFeedback');
+            const authSubmitBtn = document.getElementById('authSubmitBtn');
+
+            if (unifiedAuthForm) {
+                unifiedAuthForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('loginEmailInput')?.value?.trim();
+                    const password = document.getElementById('loginPassInput')?.value;
+                    const name = document.getElementById('regNameInput')?.value?.trim();
+
+                    if (!email || !password) return;
+
+                    if (authFeedback) {
+                        authFeedback.classList.remove('hidden', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/20');
+                        authFeedback.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+                        authFeedback.textContent = currentAuthMode === 'register' ? '⏳ Creating account...' : '⏳ Authenticating...';
+                    }
+
+                    try {
+                        let res;
+                        if (currentAuthMode === 'register') {
+                            res = await UnifiedAuth.register(email, password, name);
+                        } else {
+                            res = await UnifiedAuth.login(email, password);
+                        }
+
+                        if (res.success && res.token) {
+                            if (authFeedback) {
+                                authFeedback.textContent = '✅ Success! Redirecting to account overview...';
+                            }
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 800);
+                        } else {
+                            if (authFeedback) {
+                                authFeedback.classList.remove('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+                                authFeedback.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/20');
+                                authFeedback.textContent = res.error || 'Authentication failed.';
+                            }
+                        }
+                    } catch (err) {
+                        if (authFeedback) {
+                            authFeedback.classList.remove('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+                            authFeedback.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/20');
+                            authFeedback.textContent = err.message || 'Connection error.';
+                        }
+                    }
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    UnifiedAuth.logout();
+                });
+            }
+
+            // Hydrate PAT input from storage if present
+            // Hydrate Key Vault inputs from XstreamFlexOS Vault
+            loadKeyVaultToUI();
+        });
+
+        function loadKeyVaultToUI() {
+            const fields = [
+                'stripe_pub', 'stripe_sec', 'paypal_id',
+                'gemini', 'groq', 'openai',
+                'influencersoft', 'activecampaign', 'mailchimp'
+            ];
+            fields.forEach(f => {
+                const el = document.getElementById('vault_' + f);
+                if (el) {
+                    el.value = XstreamFlexOS.getApiKey(f) || '';
+                }
+            });
+        }
+
+        async function saveKeyVaultFromUI() {
+            const keysObj = {
+                stripe_pub: document.getElementById('vault_stripe_pub')?.value.trim() || '',
+                stripe_sec: document.getElementById('vault_stripe_sec')?.value.trim() || '',
+                paypal_id: document.getElementById('vault_paypal_id')?.value.trim() || '',
+                gemini: document.getElementById('vault_gemini')?.value.trim() || '',
+                groq: document.getElementById('vault_groq')?.value.trim() || '',
+                openai: document.getElementById('vault_openai')?.value.trim() || '',
+                influencersoft: document.getElementById('vault_influencersoft')?.value.trim() || '',
+                activecampaign: document.getElementById('vault_activecampaign')?.value.trim() || '',
+                mailchimp: document.getElementById('vault_mailchimp')?.value.trim() || ''
+            };
+
+            await XstreamFlexOS.saveAllKeys(keysObj);
+            alert("🔐 API Key Vault updated! Your keys are now accessible across XSITE, XMG, and XMAIL.");
+        }
+
+        function loadAccountGithubRepo() {
+            const repoInput = document.getElementById('accountRepoInput');
+            const patInput = document.getElementById('accountPatInput');
+            const repoName = repoInput ? repoInput.value.trim() : '';
+            const pat = patInput ? patInput.value.trim() : '';
+            if (!repoName) {
+                alert("Please enter a GitHub repository name.");
+                return;
+            }
+            if (pat) {
+                localStorage.setItem('xsites_personal_pat', pat);
+            }
+            window.location.href = `../xsite/index.html?pullRepo=${encodeURIComponent(repoName)}`;
+        }
+
+        function saveAccountGithubPat() {
+            const patInput = document.getElementById('accountPatInput');
+            const pat = patInput ? patInput.value.trim() : '';
+            if (pat) {
+                localStorage.setItem('xsites_personal_pat', pat);
+                alert("🔑 Personal GitHub Access Token saved securely.");
+            } else {
+                localStorage.removeItem('xsites_personal_pat');
+                alert("🔑 Token cleared.");
+            }
+        }
+    </script>
+    <script type="text/javascript" data-cfasync="false" src="https://humanchat.net/build/js/hb_latest.js?v=1.5.28" crossorigin="anonymous"></script>
+    <script>
+    var aiBot = new AiBot({embedId: 'b82Es2GPUNMY', remoteBaseUrl: 'https://humanchat.net/', version: '1.5.28'});
+    </script>
+</body>
+</html>
